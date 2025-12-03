@@ -142,7 +142,7 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
     const oldCount = stats.serverRequests;
     stats.serverRequests++;
     // Calculate running average properly
-    stats.avgDuration = (stats.avgDuration * oldCount + event.duration) / stats.serverRequests;
+    stats.avgDuration = ((stats.avgDuration || 0) * oldCount + event.duration) / stats.serverRequests;
   }
   
   for (const event of errorEvents) {

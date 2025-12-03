@@ -1,6 +1,7 @@
 // Deno server middleware example for Bunseki analytics
 // Usage: Add this middleware to your Deno server application
 
+import type { Context, Next } from "hono";
 import { generateSignature } from "../auth.ts";
 
 const ANALYTICS_URL = "https://your-bunseki-server.com";
@@ -73,7 +74,7 @@ export async function trackServerError(
 
 // Example middleware for Hono
 export function analyticsMiddleware() {
-  return async (c: any, next: any) => {
+  return async (c: Context, next: Next) => {
     const start = Date.now();
     
     await next();

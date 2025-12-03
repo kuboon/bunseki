@@ -13,7 +13,8 @@ export async function verifySignature(
   }
   
   const encoder = new TextEncoder();
-  const keyData = encoder.encode(key);
+  // Decode hex key to bytes for proper HMAC
+  const keyData = hexToBytes(key);
   const messageData = encoder.encode(body);
   
   const cryptoKey = await crypto.subtle.importKey(
@@ -38,7 +39,8 @@ export async function generateSignature(
   body: string,
 ): Promise<string> {
   const encoder = new TextEncoder();
-  const keyData = encoder.encode(key);
+  // Decode hex key to bytes for proper HMAC
+  const keyData = hexToBytes(key);
   const messageData = encoder.encode(body);
   
   const cryptoKey = await crypto.subtle.importKey(
