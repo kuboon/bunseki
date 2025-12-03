@@ -3,9 +3,10 @@ import { cors } from "hono/cors";
 import { validator } from "hono/validator";
 import { type } from "arktype";
 import { ALLOWED_DOMAINS, type AllowedDomain, type BrowserEvent, type ErrorEvent, type ServerEvent } from "./types.ts";
-import { saveBrowserEvent, saveErrorEvent, saveServerEvent } from "./storage.ts";
+import { saveBrowserEvent, saveErrorEvent, saveServerEvent, getRecentBrowserEvents, getRecentServerEvents, getRecentErrorEvents, getDailyStatsRange } from "./storage.ts";
 import { signatureMiddleware } from "./middleware.ts";
 import { browserEventSchema, browserErrorSchema, serverEventSchema, serverErrorSchema } from "./validation.ts";
+import { bundleClientCode } from "./bundle.ts";
 
 const app = new Hono();
 
@@ -213,6 +214,52 @@ app.post(
     }
   }
 );
+
+// Analytics view endpoint
+app.get("/domains/:domain/view/", async (c) => {
+  const domain = c.req.param("domain");
+  
+  if (!ALLOWED_DOMAINS.includes(domain as AllowedDomain)) {
+    return c.json({ error: "Domain not allowed" }, 403);
+  }
+  
+  try {
+    // Fetch data from storage
+    const [browserEvents, serverEvents, errorEvents, dailyStats] = await Promise.all([
+      getRecentBrowserEvents(domain as AllowedDomain, 100),
+      getRecentServerEvents(domain as AllowedDomain, 100),
+      getRecentErrorEvents(domain as AllowedDomain, 100),
+      getDailyStatsRange(domain as AllowedDomain, 30),
+    ]);
+    
+    const viewData = {
+      domain,
+      browserEvents,
+      serverEvents,
+      errorEvents,
+      dailyStats,
+    };
+    
+    // Read template
+    const templatePath = new URL("./view-template.html", import.meta.url).pathname;
+    let template = await Deno.readTextFile(templatePath);
+    
+    // Replace placeholders
+    template = template.replace(/\{\{DOMAIN\}\}/g, domain);
+    template = template.replace("{{VIEW_DATA}}", JSON.stringify(viewData));
+    template = template.replace("{{BUNDLE_SCRIPT}}", `<script type="module">${bundledClientCode}</script>`);
+    
+    return c.html(template);
+  } catch (error) {
+    console.error("Error rendering view:", error);
+    return c.json({ error: "Failed to render view" }, 500);
+  }
+});
+
+// Bundle client code at startup
+console.log("Bundling client code...");
+const bundledClientCode = await bundleClientCode();
+console.log("Client code bundled successfully");
 
 const port = parseInt(Deno.env.get("PORT") || "8000");
 console.log(`Starting server on port ${port}`);

@@ -209,4 +209,86 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
   }
 }
 
+// Get recent browser events
+export async function getRecentBrowserEvents(
+  domain: AllowedDomain,
+  limit = 100,
+): Promise<BrowserEvent[]> {
+  const events: BrowserEvent[] = [];
+  const iter = kv.list<BrowserEvent>({ 
+    prefix: [domain, "events", "browser"],
+    reverse: true,
+  });
+  
+  let count = 0;
+  for await (const entry of iter) {
+    if (count >= limit) break;
+    events.push(entry.value);
+    count++;
+  }
+  
+  return events;
+}
+
+// Get recent server events
+export async function getRecentServerEvents(
+  domain: AllowedDomain,
+  limit = 100,
+): Promise<ServerEvent[]> {
+  const events: ServerEvent[] = [];
+  const iter = kv.list<ServerEvent>({ 
+    prefix: [domain, "events", "server"],
+    reverse: true,
+  });
+  
+  let count = 0;
+  for await (const entry of iter) {
+    if (count >= limit) break;
+    events.push(entry.value);
+    count++;
+  }
+  
+  return events;
+}
+
+// Get recent error events
+export async function getRecentErrorEvents(
+  domain: AllowedDomain,
+  limit = 100,
+): Promise<ErrorEvent[]> {
+  const events: ErrorEvent[] = [];
+  const iter = kv.list<ErrorEvent>({ 
+    prefix: [domain, "events", "error"],
+    reverse: true,
+  });
+  
+  let count = 0;
+  for await (const entry of iter) {
+    if (count >= limit) break;
+    events.push(entry.value);
+    count++;
+  }
+  
+  return events;
+}
+
+// Get daily stats for a date range
+export async function getDailyStatsRange(
+  domain: AllowedDomain,
+  days = 30,
+): Promise<DailyStats[]> {
+  const stats: DailyStats[] = [];
+  const iter = kv.list<DailyStats>({ 
+    prefix: [domain, "stats", "daily"],
+  });
+  
+  for await (const entry of iter) {
+    stats.push(entry.value);
+  }
+  
+  // Sort by date and limit to last N days
+  stats.sort((a, b) => b.date.localeCompare(a.date));
+  return stats.slice(0, days);
+}
+
 export { kv };
