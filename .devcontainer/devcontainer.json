@@ -1,0 +1,23 @@
+{
+  "name": "Bunseki Deno Dev Container",
+  "image": "denoland/deno:latest",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "denoland.vscode-deno"
+      ],
+      "settings": {
+        "deno.enable": true,
+        "deno.lint": true,
+        "deno.unstable": true,
+        "editor.defaultFormatter": "denoland.vscode-deno",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "postCreateCommand": "deno --version",
+  "remoteUser": "deno"
+}
