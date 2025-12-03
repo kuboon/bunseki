@@ -168,9 +168,30 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
     stats.uniqueSessions = sessionsForDate ? sessionsForDate.size : 0;
   });
   
-  // Save aggregated stats
+  // Save aggregated stats (merge with existing if present)
   for (const stats of statsByDate.values()) {
-    await saveDailyStats(stats);
+    const existing = await getDailyStats(stats.domain, stats.date);
+    if (existing) {
+      // Merge with existing stats
+      existing.pageViews += stats.pageViews;
+      existing.errors += stats.errors;
+      
+      // Merge unique sessions
+      const existingSessions = sessionsByDate.get(stats.date) || new Set();
+      existing.uniqueSessions = existingSessions.size;
+      
+      // Merge server requests and recalculate average duration
+      const totalDuration = (existing.avgDuration * existing.serverRequests) + 
+                            (stats.avgDuration * stats.serverRequests);
+      existing.serverRequests += stats.serverRequests;
+      existing.avgDuration = existing.serverRequests > 0 
+        ? totalDuration / existing.serverRequests 
+        : 0;
+      
+      await saveDailyStats(existing);
+    } else {
+      await saveDailyStats(stats);
+    }
   }
   
   // Delete old raw events

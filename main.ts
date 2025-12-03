@@ -7,6 +7,9 @@ import { verifySignature } from "./auth.ts";
 const app = new Hono();
 
 // CORS middleware for browser endpoints
+// Note: Analytics tracking intentionally allows all origins to enable
+// tracking from any website. Domain validation is performed via the
+// domain parameter in the URL path.
 const corsMiddleware = cors({
   origin: (origin) => {
     // Allow requests from any origin (browser tracking)
@@ -34,6 +37,11 @@ app.post("/domains/:domain/browser", corsMiddleware, async (c) => {
   
   try {
     const body = await c.req.json();
+    
+    // Validate required fields
+    if (!body.url || typeof body.url !== "string") {
+      return c.json({ error: "Missing or invalid 'url' field" }, 400);
+    }
     
     const event: BrowserEvent = {
       domain: domain as AllowedDomain,
@@ -65,6 +73,11 @@ app.post("/domains/:domain/browser/error", corsMiddleware, async (c) => {
   
   try {
     const body = await c.req.json();
+    
+    // Validate required fields
+    if (!body.message || typeof body.message !== "string") {
+      return c.json({ error: "Missing or invalid 'message' field" }, 400);
+    }
     
     const event: ErrorEvent = {
       domain: domain as AllowedDomain,
@@ -108,6 +121,20 @@ app.post("/domains/:domain/server", async (c) => {
     
     const data = JSON.parse(body);
     
+    // Validate required fields
+    if (!data.endpoint || typeof data.endpoint !== "string") {
+      return c.json({ error: "Missing or invalid 'endpoint' field" }, 400);
+    }
+    if (!data.method || typeof data.method !== "string") {
+      return c.json({ error: "Missing or invalid 'method' field" }, 400);
+    }
+    if (typeof data.statusCode !== "number") {
+      return c.json({ error: "Missing or invalid 'statusCode' field" }, 400);
+    }
+    if (typeof data.duration !== "number") {
+      return c.json({ error: "Missing or invalid 'duration' field" }, 400);
+    }
+    
     const event: ServerEvent = {
       domain: domain as AllowedDomain,
       timestamp: Date.now(),
@@ -150,6 +177,11 @@ app.post("/domains/:domain/server/error", async (c) => {
     }
     
     const data = JSON.parse(body);
+    
+    // Validate required fields
+    if (!data.message || typeof data.message !== "string") {
+      return c.json({ error: "Missing or invalid 'message' field" }, 400);
+    }
     
     const event: ErrorEvent = {
       domain: domain as AllowedDomain,
