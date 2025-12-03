@@ -1,5 +1,5 @@
 // Client-side code for analytics view page
-// This will be bundled using Deno.bundle
+// This will be bundled using deno-emit library
 
 interface ViewData {
   domain: string;
@@ -232,10 +232,17 @@ function truncate(str: string, length: number): string {
   return str.substring(0, length) + "...";
 }
 
+// Extend Window interface to include our injected data
+declare global {
+  interface Window {
+    viewData?: ViewData;
+  }
+}
+
 // Main initialization
 function init() {
   // Get data from window object (injected by server)
-  const data = (window as any).viewData as ViewData;
+  const data = window.viewData;
 
   if (!data) {
     console.error("No view data found");
