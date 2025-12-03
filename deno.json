@@ -1,0 +1,26 @@
+{
+  "tasks": {
+    "dev": "deno run --allow-net --allow-env --unstable-kv --watch main.ts",
+    "start": "deno run --allow-net --allow-env --unstable-kv main.ts",
+    "show-key": "deno run --allow-env --unstable-kv scripts/show-key.ts",
+    "cleanup": "deno run --allow-env --unstable-kv scripts/cleanup.ts"
+  },
+  "imports": {
+    "hono": "jsr:@hono/hono@^4.6.14",
+    "hono/": "jsr:@hono/hono@^4.6.14/",
+    "arktype": "npm:arktype@^2.0.0-rc.23"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": false,
+    "proseWrap": "preserve"
+  }
+}
