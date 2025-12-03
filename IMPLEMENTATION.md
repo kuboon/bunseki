@@ -14,8 +14,10 @@ bunseki/
 │   └── show-key.ts            # Display signing keys for domains
 ├── auth.ts                    # HMAC-SHA256 signature verification
 ├── main.ts                    # Main Hono.js server application
+├── middleware.ts              # Signature verification middleware
 ├── storage.ts                 # Deno KV storage operations
 ├── types.ts                   # TypeScript type definitions
+├── validation.ts              # arktype validation schemas
 ├── deno.json                  # Deno configuration and tasks
 ├── .gitignore                 # Git ignore rules
 └── README.md                  # Documentation
@@ -38,16 +40,16 @@ bunseki/
 - CORS support with origin validation (allowed domains + subdomains)
 - Tracks: URL, referrer, user agent, screen resolution, language, session ID
 - No authentication required (public endpoints)
-- Input validation for required fields
+- arktype validation for required fields
 
 #### Server Endpoints (Signature-authenticated)
 - `POST /domains/:domain/server` - Server request tracking
 - `POST /domains/:domain/server/error` - Server error reporting
 
 **Features:**
-- HMAC-SHA256 signature authentication via `x-signature` header
+- HMAC-SHA256 signature authentication via `x-signature` header (as Hono middleware)
 - Tracks: endpoint, method, status code, duration, user agent, IP
-- Input validation for required fields
+- arktype validation for required fields
 
 ### 3. Domain Configuration
 - Hardcoded whitelist: `o.kbn.one` and `dd2030.org`
@@ -167,7 +169,8 @@ deno task cleanup
 
 ## Dependencies
 
-- **Hono**: v4.0.0 - Fast web framework
+- **Hono**: ^4.6.14 (from JSR) - Fast web framework
+- **arktype**: ^2.0.0-rc.23 - Type validation and runtime checking
 - **Deno**: Runtime environment
 - **Deno KV**: Built-in key-value storage
 

@@ -22,8 +22,8 @@
          │     Hono.js Router          │
          │  - Domain Validation        │
          │  - CORS Middleware          │
-         │  - Input Validation         │
-         │  - Signature Verification   │
+         │  - arktype Validation       │
+         │  - Signature Middleware     │
          └─────────────┬───────────────┘
                        ▼
          ┌─────────────────────────────┐
@@ -71,14 +71,16 @@ Browser Page Load
     │   ├─► POST to /domains/o.kbn.one/browser
     │   ├─► CORS validation (origin check)
     │   ├─► Domain validation
-    │   ├─► Save to KV: events/browser/domain/timestamp
-    │   └─► Save session: sessions/domain/date/sessionId
+    │   ├─► arktype validation
+    │   ├─► Save to KV: domain/events/browser/timestamp
+    │   └─► Save session: domain/sessions/date/sessionId
     │
     └─► Track Errors
         ├─► window.addEventListener('error')
         ├─► Collect: message, stack, url
         ├─► POST to /domains/o.kbn.one/browser/error
-        └─► Save to KV: events/error/domain/timestamp
+        ├─► arktype validation
+        └─► Save to KV: domain/events/error/timestamp
 ```
 
 ### Server Analytics Flow
@@ -100,12 +102,14 @@ Incoming Request to Your App
     │
     ├─► POST to /domains/o.kbn.one/server
     │
-    ├─► Server validates signature
-    │   ├─► Get key from KV: keys/domain
+    ├─► Server validates signature (middleware)
+    │   ├─► Get key from KV: domain/keys
     │   ├─► Verify HMAC signature
     │   └─► Reject if invalid
     │
-    └─► Save to KV: events/server/domain/timestamp
+    ├─► arktype validation
+    │
+    └─► Save to KV: domain/events/server/timestamp
 ```
 
 ## Endpoints
@@ -139,15 +143,15 @@ To add a new domain:
 - ✅ CORS enabled with origin validation
 - ✅ Validates origin matches allowed domains (including subdomains)
 - ✅ No authentication required (public tracking)
-- ✅ Input validation on required fields
+- ✅ arktype validation on required fields
 - ✅ Domain whitelist enforced
 
 ### Server Endpoints  
-- ✅ HMAC-SHA256 signature required
+- ✅ HMAC-SHA256 signature required (as Hono middleware)
 - ✅ Keys automatically generated and stored in KV
 - ✅ One key per domain
 - ✅ Keys never exposed (use `deno task show-key`)
-- ✅ Input validation on required fields
+- ✅ arktype validation on required fields
 - ✅ Domain whitelist enforced
 
 ## Data Lifecycle
@@ -218,4 +222,28 @@ interface DailyStats {
   serverRequests: number;
   avgDuration: number;
 }
+```
+
+## Validation with arktype
+
+```typescript
+// validation.ts
+import { type } from "arktype";
+
+export const browserEventSchema = type({
+  "url": "string",
+  "referrer?": "string",
+  "screenResolution?": "string",
+  "language?": "string",
+  "sessionId?": "string",
+});
+
+// Used in Hono endpoints:
+validator("json", (value, c) => {
+  const parsed = browserEventSchema(value);
+  if (parsed instanceof type.errors) {
+    return c.json({ error: "Validation failed", details: parsed.summary }, 400);
+  }
+  return parsed;
+})
 ```
