@@ -10,11 +10,19 @@ const RETENTION_PERIOD_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 // ["events", "server", domain, timestamp] -> ServerEvent
 // ["events", "error", domain, timestamp] -> ErrorEvent
 // ["stats", "daily", domain, date] -> DailyStats
+// ["sessions", domain, date, sessionId] -> true (for tracking unique sessions)
 // ["keys", domain] -> string (signing key)
 
 export async function saveBrowserEvent(event: BrowserEvent): Promise<void> {
   const key = ["events", "browser", event.domain, event.timestamp];
   await kv.set(key, event);
+  
+  // Also track session for the day if sessionId is provided
+  if (event.sessionId) {
+    const date = new Date(event.timestamp).toISOString().split("T")[0];
+    const sessionKey = ["sessions", event.domain, date, event.sessionId];
+    await kv.set(sessionKey, true);
+  }
 }
 
 export async function saveServerEvent(event: ServerEvent): Promise<void> {
@@ -69,7 +77,6 @@ export async function getSigningKey(domain: AllowedDomain): Promise<string | nul
 // Aggregate old data and clean up
 export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> {
   const oneMonthAgo = Date.now() - RETENTION_PERIOD_MS;
-  const sessionsByDate = new Map<string, Set<string>>();
   
   // Aggregate browser events
   const browserEvents: BrowserEvent[] = [];
@@ -77,13 +84,6 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
   for await (const entry of browserIter) {
     if (entry.value.timestamp < oneMonthAgo) {
       browserEvents.push(entry.value);
-      if (entry.value.sessionId) {
-        const date = new Date(entry.value.timestamp).toISOString().split("T")[0];
-        if (!sessionsByDate.has(date)) {
-          sessionsByDate.set(date, new Set());
-        }
-        sessionsByDate.get(date)!.add(entry.value.sessionId);
-      }
     }
   }
   
@@ -162,11 +162,15 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
     stats.errors++;
   }
   
-  // Update unique sessions count per date
-  statsByDate.forEach((stats) => {
-    const sessionsForDate = sessionsByDate.get(stats.date);
-    stats.uniqueSessions = sessionsForDate ? sessionsForDate.size : 0;
-  });
+  // Update unique sessions count per date (count from permanent session store)
+  for (const [date, stats] of statsByDate.entries()) {
+    let sessionCount = 0;
+    const sessionIter = kv.list({ prefix: ["sessions", domain, date] });
+    for await (const _ of sessionIter) {
+      sessionCount++;
+    }
+    stats.uniqueSessions = sessionCount;
+  }
   
   // Save aggregated stats (merge with existing if present)
   for (const stats of statsByDate.values()) {
@@ -176,9 +180,8 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
       existing.pageViews += stats.pageViews;
       existing.errors += stats.errors;
       
-      // Merge unique sessions
-      const existingSessions = sessionsByDate.get(stats.date) || new Set();
-      existing.uniqueSessions = existingSessions.size;
+      // Unique sessions are counted from the permanent session store
+      existing.uniqueSessions = stats.uniqueSessions;
       
       // Merge server requests and recalculate average duration
       const totalDuration = (existing.avgDuration * existing.serverRequests) + 
