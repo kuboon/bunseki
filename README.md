@@ -132,6 +132,16 @@ deno task show-key
 
 This will display the signing keys for all configured domains. Keys are automatically generated on first run and stored in Deno KV.
 
+## Testing
+
+Generate test data for development:
+
+```bash
+deno task test-data
+```
+
+This will populate the database with sample browser events, server events, errors, and daily statistics. You can then view the analytics dashboard at `http://localhost:8000/domains/o.kbn.one/view/`.
+
 ## Data Retention
 
 Run the cleanup task to aggregate old data:

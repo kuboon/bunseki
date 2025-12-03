@@ -11,13 +11,18 @@ bunseki/
 │   └── server-client.ts       # Server middleware example for Deno/Hono
 ├── scripts/
 │   ├── cleanup.ts             # Data aggregation and cleanup script
-│   └── show-key.ts            # Display signing keys for domains
+│   ├── show-key.ts            # Display signing keys for domains
+│   ├── build-client.ts        # Bundle client code for view page
+│   └── generate-test-data.ts  # Generate test analytics data
 ├── auth.ts                    # HMAC-SHA256 signature verification
 ├── main.ts                    # Main Hono.js server application
 ├── middleware.ts              # Signature verification middleware
 ├── storage.ts                 # Deno KV storage operations
 ├── types.ts                   # TypeScript type definitions
 ├── validation.ts              # arktype validation schemas
+├── bundle.ts                  # Client code bundling for view page
+├── view-client.ts             # Client-side visualization code
+├── view-template.html         # HTML template for analytics view
 ├── deno.json                  # Deno configuration and tasks
 ├── .gitignore                 # Git ignore rules
 └── README.md                  # Documentation
@@ -50,6 +55,16 @@ bunseki/
 - HMAC-SHA256 signature authentication via `x-signature` header (as Hono middleware)
 - Tracks: endpoint, method, status code, duration, user agent, IP
 - arktype validation for required fields
+
+#### Analytics View Endpoint
+- `GET /domains/:domain/view/` - Web-based analytics dashboard
+
+**Features:**
+- Displays graphs and tables of collected analytics data
+- Shows browser events, server events, error events, and daily statistics
+- Client-side visualization using bundled JavaScript
+- Responsive design with CSS-based charts and tables
+- Real-time data from Deno KV storage
 
 ### 3. Domain Configuration
 - Hardcoded whitelist: `o.kbn.one` and `dd2030.org`
@@ -150,6 +165,9 @@ await trackServerError(message, stack, url, userAgent);
 ## Running the Server
 
 ```bash
+# Build client bundle (optional, but recommended)
+deno task build-client
+
 # Development with auto-reload
 deno task dev
 
@@ -161,7 +179,14 @@ deno task show-key
 
 # Run cleanup (aggregate old data)
 deno task cleanup
+
+# Generate test data
+deno task test-data
 ```
+
+After starting the server, you can access the analytics dashboard at:
+- `http://localhost:8000/domains/o.kbn.one/view/`
+- `http://localhost:8000/domains/dd2030.org/view/`
 
 ## Environment Variables
 
@@ -185,10 +210,10 @@ The implementation has been thoroughly reviewed with:
 ## Future Enhancements
 
 Possible future improvements:
-- Dashboard UI for viewing statistics
-- Query API for retrieving analytics data
 - Webhook notifications for errors
 - Rate limiting on endpoints
 - Additional event types (custom events, conversions, etc.)
 - Export functionality for data
 - Automatic scheduled cleanup (cron job)
+- Interactive date range selection in dashboard
+- More advanced visualizations (pie charts, line graphs)
