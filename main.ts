@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { validator } from "hono/validator";
+import { type } from "arktype";
 import { ALLOWED_DOMAINS, type AllowedDomain, type BrowserEvent, type ErrorEvent, type ServerEvent } from "./types.ts";
 import { saveBrowserEvent, saveErrorEvent, saveServerEvent } from "./storage.ts";
 import { signatureMiddleware } from "./middleware.ts";
@@ -134,13 +135,6 @@ app.post(
 app.post(
   "/domains/:domain/server",
   signatureMiddleware,
-  validator("json", (value, c) => {
-    const parsed = serverEventSchema(value);
-    if (parsed instanceof type.errors) {
-      return c.json({ error: "Validation failed", details: parsed.summary }, 400);
-    }
-    return parsed;
-  }),
   async (c) => {
     const domain = c.req.param("domain");
     
@@ -149,17 +143,24 @@ app.post(
     }
     
     try {
-      const data = c.req.valid("json");
+      // Get parsed body from middleware context
+      const data = c.get("parsedBody");
+      
+      // Validate with arktype
+      const parsed = serverEventSchema(data);
+      if (parsed instanceof type.errors) {
+        return c.json({ error: "Validation failed", details: parsed.summary }, 400);
+      }
       
       const event: ServerEvent = {
         domain: domain as AllowedDomain,
         timestamp: Date.now(),
-        endpoint: data.endpoint,
-        method: data.method,
-        statusCode: data.statusCode,
-        duration: data.duration,
-        userAgent: data.userAgent,
-        ip: data.ip,
+        endpoint: parsed.endpoint,
+        method: parsed.method,
+        statusCode: parsed.statusCode,
+        duration: parsed.duration,
+        userAgent: parsed.userAgent,
+        ip: parsed.ip,
       };
       
       await saveServerEvent(event);
@@ -176,13 +177,6 @@ app.post(
 app.post(
   "/domains/:domain/server/error",
   signatureMiddleware,
-  validator("json", (value, c) => {
-    const parsed = serverErrorSchema(value);
-    if (parsed instanceof type.errors) {
-      return c.json({ error: "Validation failed", details: parsed.summary }, 400);
-    }
-    return parsed;
-  }),
   async (c) => {
     const domain = c.req.param("domain");
     
@@ -191,15 +185,22 @@ app.post(
     }
     
     try {
-      const data = c.req.valid("json");
+      // Get parsed body from middleware context
+      const data = c.get("parsedBody");
+      
+      // Validate with arktype
+      const parsed = serverErrorSchema(data);
+      if (parsed instanceof type.errors) {
+        return c.json({ error: "Validation failed", details: parsed.summary }, 400);
+      }
       
       const event: ErrorEvent = {
         domain: domain as AllowedDomain,
         timestamp: Date.now(),
-        message: data.message,
-        stack: data.stack,
-        url: data.url,
-        userAgent: data.userAgent,
+        message: parsed.message,
+        stack: parsed.stack,
+        url: parsed.url,
+        userAgent: parsed.userAgent,
         type: "server",
       };
       
