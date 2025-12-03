@@ -2,6 +2,9 @@ import type { AllowedDomain, BrowserEvent, DailyStats, ErrorEvent, ServerEvent }
 
 const kv = await Deno.openKv();
 
+// Data retention configuration
+const RETENTION_PERIOD_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
 // Keys structure:
 // ["events", "browser", domain, timestamp] -> BrowserEvent
 // ["events", "server", domain, timestamp] -> ServerEvent
@@ -65,8 +68,8 @@ export async function getSigningKey(domain: AllowedDomain): Promise<string | nul
 
 // Aggregate old data and clean up
 export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> {
-  const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-  const sessions = new Set<string>();
+  const oneMonthAgo = Date.now() - RETENTION_PERIOD_MS;
+  const sessionsByDate = new Map<string, Set<string>>();
   
   // Aggregate browser events
   const browserEvents: BrowserEvent[] = [];
@@ -75,7 +78,11 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
     if (entry.value.timestamp < oneMonthAgo) {
       browserEvents.push(entry.value);
       if (entry.value.sessionId) {
-        sessions.add(entry.value.sessionId);
+        const date = new Date(entry.value.timestamp).toISOString().split("T")[0];
+        if (!sessionsByDate.has(date)) {
+          sessionsByDate.set(date, new Set());
+        }
+        sessionsByDate.get(date)!.add(entry.value.sessionId);
       }
     }
   }
@@ -132,8 +139,10 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
       });
     }
     const stats = statsByDate.get(date)!;
+    const oldCount = stats.serverRequests;
     stats.serverRequests++;
-    stats.avgDuration = (stats.avgDuration * (stats.serverRequests - 1) + event.duration) / stats.serverRequests;
+    // Calculate running average properly
+    stats.avgDuration = (stats.avgDuration * oldCount + event.duration) / stats.serverRequests;
   }
   
   for (const event of errorEvents) {
@@ -153,9 +162,10 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
     stats.errors++;
   }
   
-  // Update unique sessions count
+  // Update unique sessions count per date
   statsByDate.forEach((stats) => {
-    stats.uniqueSessions = sessions.size;
+    const sessionsForDate = sessionsByDate.get(stats.date);
+    stats.uniqueSessions = sessionsForDate ? sessionsForDate.size : 0;
   });
   
   // Save aggregated stats
