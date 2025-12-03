@@ -6,8 +6,9 @@
     "cleanup": "deno run --allow-env --unstable-kv scripts/cleanup.ts"
   },
   "imports": {
-    "hono": "https://deno.land/x/hono@v4.0.0/mod.ts",
-    "hono/": "https://deno.land/x/hono@v4.0.0/"
+    "hono": "jsr:@hono/hono@^4.6.14",
+    "hono/": "jsr:@hono/hono@^4.6.14/",
+    "arktype": "npm:arktype@^2.0.0-rc.23"
   },
   "lint": {
     "rules": {

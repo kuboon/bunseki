@@ -6,32 +6,32 @@ const kv = await Deno.openKv();
 const RETENTION_PERIOD_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 // Keys structure:
-// ["events", "browser", domain, timestamp] -> BrowserEvent
-// ["events", "server", domain, timestamp] -> ServerEvent
-// ["events", "error", domain, timestamp] -> ErrorEvent
-// ["stats", "daily", domain, date] -> DailyStats
-// ["sessions", domain, date, sessionId] -> true (for tracking unique sessions)
-// ["keys", domain] -> string (signing key)
+// [domain, "events", "browser", timestamp] -> BrowserEvent
+// [domain, "events", "server", timestamp] -> ServerEvent
+// [domain, "events", "error", timestamp] -> ErrorEvent
+// [domain, "stats", "daily", date] -> DailyStats
+// [domain, "sessions", date, sessionId] -> true (for tracking unique sessions)
+// [domain, "keys"] -> string (signing key)
 
 export async function saveBrowserEvent(event: BrowserEvent): Promise<void> {
-  const key = ["events", "browser", event.domain, event.timestamp];
+  const key = [event.domain, "events", "browser", event.timestamp];
   await kv.set(key, event);
   
   // Also track session for the day if sessionId is provided
   if (event.sessionId) {
     const date = new Date(event.timestamp).toISOString().split("T")[0];
-    const sessionKey = ["sessions", event.domain, date, event.sessionId];
+    const sessionKey = [event.domain, "sessions", date, event.sessionId];
     await kv.set(sessionKey, true);
   }
 }
 
 export async function saveServerEvent(event: ServerEvent): Promise<void> {
-  const key = ["events", "server", event.domain, event.timestamp];
+  const key = [event.domain, "events", "server", event.timestamp];
   await kv.set(key, event);
 }
 
 export async function saveErrorEvent(event: ErrorEvent): Promise<void> {
-  const key = ["events", "error", event.domain, event.timestamp];
+  const key = [event.domain, "events", "error", event.timestamp];
   await kv.set(key, event);
 }
 
@@ -39,18 +39,18 @@ export async function getDailyStats(
   domain: AllowedDomain,
   date: string,
 ): Promise<DailyStats | null> {
-  const key = ["stats", "daily", domain, date];
+  const key = [domain, "stats", "daily", date];
   const result = await kv.get<DailyStats>(key);
   return result.value;
 }
 
 export async function saveDailyStats(stats: DailyStats): Promise<void> {
-  const key = ["stats", "daily", stats.domain, stats.date];
+  const key = [stats.domain, "stats", "daily", stats.date];
   await kv.set(key, stats);
 }
 
 export async function getOrCreateSigningKey(domain: AllowedDomain): Promise<string> {
-  const key = ["keys", domain];
+  const key = [domain, "keys"];
   const result = await kv.get<string>(key);
   
   if (result.value) {
@@ -69,7 +69,7 @@ export async function getOrCreateSigningKey(domain: AllowedDomain): Promise<stri
 }
 
 export async function getSigningKey(domain: AllowedDomain): Promise<string | null> {
-  const key = ["keys", domain];
+  const key = [domain, "keys"];
   const result = await kv.get<string>(key);
   return result.value;
 }
@@ -80,7 +80,7 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
   
   // Aggregate browser events
   const browserEvents: BrowserEvent[] = [];
-  const browserIter = kv.list<BrowserEvent>({ prefix: ["events", "browser", domain] });
+  const browserIter = kv.list<BrowserEvent>({ prefix: [domain, "events", "browser"] });
   for await (const entry of browserIter) {
     if (entry.value.timestamp < oneMonthAgo) {
       browserEvents.push(entry.value);
@@ -89,7 +89,7 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
   
   // Aggregate server events
   const serverEvents: ServerEvent[] = [];
-  const serverIter = kv.list<ServerEvent>({ prefix: ["events", "server", domain] });
+  const serverIter = kv.list<ServerEvent>({ prefix: [domain, "events", "server"] });
   for await (const entry of serverIter) {
     if (entry.value.timestamp < oneMonthAgo) {
       serverEvents.push(entry.value);
@@ -98,7 +98,7 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
   
   // Aggregate error events
   const errorEvents: ErrorEvent[] = [];
-  const errorIter = kv.list<ErrorEvent>({ prefix: ["events", "error", domain] });
+  const errorIter = kv.list<ErrorEvent>({ prefix: [domain, "events", "error"] });
   for await (const entry of errorIter) {
     if (entry.value.timestamp < oneMonthAgo) {
       errorEvents.push(entry.value);
@@ -165,7 +165,7 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
   // Update unique sessions count per date (count from permanent session store)
   for (const [date, stats] of statsByDate.entries()) {
     let sessionCount = 0;
-    const sessionIter = kv.list({ prefix: ["sessions", domain, date] });
+    const sessionIter = kv.list({ prefix: [domain, "sessions", date] });
     for await (const _ of sessionIter) {
       sessionCount++;
     }
@@ -199,13 +199,13 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
   
   // Delete old raw events
   for (const event of browserEvents) {
-    await kv.delete(["events", "browser", domain, event.timestamp]);
+    await kv.delete([domain, "events", "browser", event.timestamp]);
   }
   for (const event of serverEvents) {
-    await kv.delete(["events", "server", domain, event.timestamp]);
+    await kv.delete([domain, "events", "server", event.timestamp]);
   }
   for (const event of errorEvents) {
-    await kv.delete(["events", "error", domain, event.timestamp]);
+    await kv.delete([domain, "events", "error", event.timestamp]);
   }
 }
 
