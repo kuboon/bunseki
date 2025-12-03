@@ -33,7 +33,25 @@ deno task start
 
 The server runs on port 8000 by default (configurable via `PORT` environment variable).
 
+### Build Client Bundle
+
+Before starting the server, optionally build the client-side JavaScript bundle:
+
+```bash
+deno task build-client
+```
+
+This generates a bundled JavaScript file for the analytics view page. If not generated, the server will use the TypeScript source directly.
+
 ## API Endpoints
+
+### Analytics View
+
+**Endpoint**: `GET /domains/:domain/view/`
+
+- Web-based analytics dashboard
+- Displays graphs and tables of collected data
+- Shows browser events, server events, errors, and daily statistics
 
 ### Browser Analytics
 

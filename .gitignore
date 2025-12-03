@@ -2,6 +2,9 @@
 .env
 .deno/
 
+# Generated files
+view-client.bundle.js
+
 # IDE
 .vscode/
 .idea/
