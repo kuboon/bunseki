@@ -1,13 +1,35 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { serveStatic } from "hono/deno";
 import { validator } from "hono/validator";
 import { type } from "arktype";
 import { ALLOWED_DOMAINS, type AllowedDomain, type BrowserEvent, type ErrorEvent, type ServerEvent } from "./types.ts";
-import { saveBrowserEvent, saveErrorEvent, saveServerEvent } from "./storage.ts";
+import { 
+  saveBrowserEvent, 
+  saveErrorEvent, 
+  saveServerEvent,
+  getRecentBrowserEvents,
+  getRecentServerEvents,
+  getRecentErrorEvents,
+  getDailyStatsRange,
+} from "./storage.ts";
 import { signatureMiddleware } from "./middleware.ts";
 import { browserEventSchema, browserErrorSchema, serverEventSchema, serverErrorSchema } from "./validation.ts";
 
 const app = new Hono();
+
+// Domain validation middleware
+const domainMiddleware = async (c: any, next: any) => {
+  const domain = c.req.param("domain");
+  
+  if (!ALLOWED_DOMAINS.includes(domain as AllowedDomain)) {
+    return c.json({ error: "Domain not allowed" }, 403);
+  }
+  
+  // Store validated domain in context
+  c.set("domain", domain as AllowedDomain);
+  await next();
+};
 
 // CORS middleware for browser endpoints
 // Note: For analytics tracking, we need to allow cross-origin requests
@@ -48,9 +70,13 @@ app.get("/", (c) => {
   return c.json({ status: "ok", service: "bunseki" });
 });
 
+// Group routes under /domains/:domain with domain validation
+const domains = app.basePath("/domains/:domain");
+domains.use("*", domainMiddleware);
+
 // Browser analytics endpoint
-app.post(
-  "/domains/:domain/browser",
+domains.post(
+  "/browser",
   corsMiddleware,
   validator("json", (value, c) => {
     const parsed = browserEventSchema(value);
@@ -60,17 +86,13 @@ app.post(
     return parsed;
   }),
   async (c) => {
-    const domain = c.req.param("domain");
-    
-    if (!ALLOWED_DOMAINS.includes(domain as AllowedDomain)) {
-      return c.json({ error: "Domain not allowed" }, 403);
-    }
+    const domain = c.get("domain") as AllowedDomain;
     
     try {
       const body = c.req.valid("json");
       
       const event: BrowserEvent = {
-        domain: domain as AllowedDomain,
+        domain,
         timestamp: Date.now(),
         url: body.url,
         referrer: body.referrer,
@@ -91,8 +113,8 @@ app.post(
 );
 
 // Browser error reporting endpoint
-app.post(
-  "/domains/:domain/browser/error",
+domains.post(
+  "/browser/error",
   corsMiddleware,
   validator("json", (value, c) => {
     const parsed = browserErrorSchema(value);
@@ -102,17 +124,13 @@ app.post(
     return parsed;
   }),
   async (c) => {
-    const domain = c.req.param("domain");
-    
-    if (!ALLOWED_DOMAINS.includes(domain as AllowedDomain)) {
-      return c.json({ error: "Domain not allowed" }, 403);
-    }
+    const domain = c.get("domain") as AllowedDomain;
     
     try {
       const body = c.req.valid("json");
       
       const event: ErrorEvent = {
-        domain: domain as AllowedDomain,
+        domain,
         timestamp: Date.now(),
         message: body.message,
         stack: body.stack,
@@ -132,15 +150,11 @@ app.post(
 );
 
 // Server analytics endpoint (with signature authentication)
-app.post(
-  "/domains/:domain/server",
+domains.post(
+  "/server",
   signatureMiddleware,
   async (c) => {
-    const domain = c.req.param("domain");
-    
-    if (!ALLOWED_DOMAINS.includes(domain as AllowedDomain)) {
-      return c.json({ error: "Domain not allowed" }, 403);
-    }
+    const domain = c.get("domain") as AllowedDomain;
     
     try {
       // Get parsed body from middleware context
@@ -153,7 +167,7 @@ app.post(
       }
       
       const event: ServerEvent = {
-        domain: domain as AllowedDomain,
+        domain,
         timestamp: Date.now(),
         endpoint: parsed.endpoint,
         method: parsed.method,
@@ -174,15 +188,11 @@ app.post(
 );
 
 // Server error reporting endpoint (with signature authentication)
-app.post(
-  "/domains/:domain/server/error",
+domains.post(
+  "/server/error",
   signatureMiddleware,
   async (c) => {
-    const domain = c.req.param("domain");
-    
-    if (!ALLOWED_DOMAINS.includes(domain as AllowedDomain)) {
-      return c.json({ error: "Domain not allowed" }, 403);
-    }
+    const domain = c.get("domain") as AllowedDomain;
     
     try {
       // Get parsed body from middleware context
@@ -195,7 +205,7 @@ app.post(
       }
       
       const event: ErrorEvent = {
-        domain: domain as AllowedDomain,
+        domain,
         timestamp: Date.now(),
         message: parsed.message,
         stack: parsed.stack,
@@ -213,6 +223,33 @@ app.post(
     }
   }
 );
+
+// API endpoint to fetch analytics data
+domains.get("/api/data", async (c) => {
+  const domain = c.get("domain") as AllowedDomain;
+  
+  try {
+    const [browserEvents, serverEvents, errorEvents, dailyStats] = await Promise.all([
+      getRecentBrowserEvents(domain),
+      getRecentServerEvents(domain),
+      getRecentErrorEvents(domain),
+      getDailyStatsRange(domain, 30),
+    ]);
+    
+    return c.json({
+      browserEvents,
+      serverEvents,
+      errorEvents,
+      dailyStats,
+    });
+  } catch (error) {
+    console.error("Error fetching analytics data:", error);
+    return c.json({ error: "Failed to fetch analytics data" }, 500);
+  }
+});
+
+// Serve static files from view directory
+domains.get("/view/*", serveStatic({ root: "./" }));
 
 const port = parseInt(Deno.env.get("PORT") || "8000");
 console.log(`Starting server on port ${port}`);

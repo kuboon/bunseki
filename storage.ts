@@ -209,4 +209,94 @@ export async function aggregateAndCleanup(domain: AllowedDomain): Promise<void> 
   }
 }
 
+// Retrieve recent browser events
+export async function getRecentBrowserEvents(
+  domain: AllowedDomain,
+  limit = 50,
+): Promise<BrowserEvent[]> {
+  const events: BrowserEvent[] = [];
+  const iter = kv.list<BrowserEvent>({ 
+    prefix: [domain, "events", "browser"],
+    reverse: true,
+  });
+  
+  for await (const entry of iter) {
+    events.push(entry.value);
+    if (events.length >= limit) break;
+  }
+  
+  return events;
+}
+
+// Retrieve recent server events
+export async function getRecentServerEvents(
+  domain: AllowedDomain,
+  limit = 50,
+): Promise<ServerEvent[]> {
+  const events: ServerEvent[] = [];
+  const iter = kv.list<ServerEvent>({ 
+    prefix: [domain, "events", "server"],
+    reverse: true,
+  });
+  
+  for await (const entry of iter) {
+    events.push(entry.value);
+    if (events.length >= limit) break;
+  }
+  
+  return events;
+}
+
+// Retrieve recent error events
+export async function getRecentErrorEvents(
+  domain: AllowedDomain,
+  limit = 50,
+): Promise<ErrorEvent[]> {
+  const events: ErrorEvent[] = [];
+  const iter = kv.list<ErrorEvent>({ 
+    prefix: [domain, "events", "error"],
+    reverse: true,
+  });
+  
+  for await (const entry of iter) {
+    events.push(entry.value);
+    if (events.length >= limit) break;
+  }
+  
+  return events;
+}
+
+// Retrieve daily stats for a date range
+export async function getDailyStatsRange(
+  domain: AllowedDomain,
+  days = 30,
+): Promise<DailyStats[]> {
+  const stats: DailyStats[] = [];
+  const today = new Date();
+  
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split("T")[0];
+    
+    const dayStat = await getDailyStats(domain, dateStr);
+    if (dayStat) {
+      stats.push(dayStat);
+    } else {
+      // Add empty stat for missing days
+      stats.push({
+        domain,
+        date: dateStr,
+        pageViews: 0,
+        uniqueSessions: 0,
+        errors: 0,
+        serverRequests: 0,
+        avgDuration: 0,
+      });
+    }
+  }
+  
+  return stats.reverse(); // Return in chronological order
+}
+
 export { kv };

@@ -2,6 +2,10 @@
 .env
 .deno/
 
+# Bundled client code
+view/client.bundle.js
+view/client.bundle.js.map
+
 # IDE
 .vscode/
 .idea/
