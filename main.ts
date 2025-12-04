@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { serveStatic } from "hono/deno";
 import { validator } from "hono/validator";
+import type { Context, Next } from "hono";
 import { type } from "arktype";
 import { ALLOWED_DOMAINS, type AllowedDomain, type BrowserEvent, type ErrorEvent, type ServerEvent } from "./types.ts";
 import { 
@@ -19,7 +20,7 @@ import { browserEventSchema, browserErrorSchema, serverEventSchema, serverErrorS
 const app = new Hono();
 
 // Domain validation middleware
-const domainMiddleware = async (c: any, next: any) => {
+const domainMiddleware = async (c: Context, next: Next) => {
   const domain = c.req.param("domain");
   
   if (!ALLOWED_DOMAINS.includes(domain as AllowedDomain)) {

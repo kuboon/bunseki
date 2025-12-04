@@ -74,6 +74,13 @@ function formatDate(dateStr: string): string {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
+// Helper function to get element by ID
+function getById(id: string): HTMLElement {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`Element not found: ${id}`);
+  return el;
+}
+
 // Render summary statistics
 function renderStats(data: AnalyticsData) {
   const totalPageViews = data.dailyStats.reduce((sum, day) => sum + day.pageViews, 0);
@@ -88,15 +95,15 @@ function renderStats(data: AnalyticsData) {
     );
   }
   
-  document.getElementById("total-pageviews")!.textContent = totalPageViews.toString();
-  document.getElementById("total-errors")!.textContent = totalErrors.toString();
-  document.getElementById("total-server-requests")!.textContent = totalServerRequests.toString();
-  document.getElementById("avg-response-time")!.textContent = `${avgDuration}ms`;
+  getById("total-pageviews").textContent = totalPageViews.toString();
+  getById("total-errors").textContent = totalErrors.toString();
+  getById("total-server-requests").textContent = totalServerRequests.toString();
+  getById("avg-response-time").textContent = `${avgDuration}ms`;
 }
 
 // Render bar chart for daily page views
 function renderChart(data: AnalyticsData) {
-  const chartEl = document.getElementById("pageview-chart")!;
+  const chartEl = getById("pageview-chart");
   chartEl.innerHTML = "";
   
   if (data.dailyStats.length === 0) {
@@ -104,7 +111,13 @@ function renderChart(data: AnalyticsData) {
     return;
   }
   
-  const maxViews = Math.max(...data.dailyStats.map(d => d.pageViews), 1);
+  // Find max views safely without spread operator
+  let maxViews = 1;
+  for (const day of data.dailyStats) {
+    if (day.pageViews > maxViews) {
+      maxViews = day.pageViews;
+    }
+  }
   
   data.dailyStats.forEach(day => {
     const bar = document.createElement("div");
@@ -124,7 +137,7 @@ function renderChart(data: AnalyticsData) {
 
 // Render browser events table
 function renderBrowserEvents(events: BrowserEvent[]) {
-  const tbody = document.getElementById("browser-events")!;
+  const tbody = getById("browser-events");
   tbody.innerHTML = "";
   
   if (events.length === 0) {
@@ -146,7 +159,7 @@ function renderBrowserEvents(events: BrowserEvent[]) {
 
 // Render server events table
 function renderServerEvents(events: ServerEvent[]) {
-  const tbody = document.getElementById("server-events")!;
+  const tbody = getById("server-events");
   tbody.innerHTML = "";
   
   if (events.length === 0) {
@@ -169,7 +182,7 @@ function renderServerEvents(events: ServerEvent[]) {
 
 // Render error events table
 function renderErrorEvents(events: ErrorEvent[]) {
-  const tbody = document.getElementById("error-events")!;
+  const tbody = getById("error-events");
   tbody.innerHTML = "";
   
   if (events.length === 0) {
@@ -200,12 +213,12 @@ async function init() {
     renderServerEvents(data.serverEvents);
     renderErrorEvents(data.errorEvents);
     
-    document.getElementById("loading")!.style.display = "none";
-    document.getElementById("dashboard")!.style.display = "block";
+    getById("loading").style.display = "none";
+    getById("dashboard").style.display = "block";
   } catch (error) {
     console.error("Failed to load analytics data:", error);
-    document.getElementById("loading")!.style.display = "none";
-    const errorEl = document.getElementById("error")!;
+    getById("loading").style.display = "none";
+    const errorEl = getById("error");
     errorEl.textContent = `Error loading analytics data: ${error instanceof Error ? error.message : String(error)}`;
     errorEl.style.display = "block";
   }
