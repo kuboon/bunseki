@@ -215,7 +215,16 @@ app.post(
   }
 );
 
-// API endpoint to fetch analytics data
+/**
+ * API endpoint to fetch analytics data for a domain
+ * Returns recent events and daily statistics in JSON format
+ * 
+ * @route GET /domains/:domain/api/data
+ * @param domain - The domain to fetch data for (must be in ALLOWED_DOMAINS)
+ * @returns JSON with browserEvents, serverEvents, errorEvents, and dailyStats
+ * @throws 403 if domain is not allowed
+ * @throws 500 if data fetching fails
+ */
 app.get("/domains/:domain/api/data", async (c) => {
   const domain = c.req.param("domain");
   

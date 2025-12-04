@@ -59,9 +59,16 @@ function renderStatsSummary(data) {
   const totalPageViews = data.dailyStats.reduce((sum, s) => sum + s.pageViews, 0);
   const totalErrors = data.dailyStats.reduce((sum, s) => sum + s.errors, 0);
   const totalServerRequests = data.dailyStats.reduce((sum, s) => sum + s.serverRequests, 0);
-  const avgDuration = data.dailyStats.length > 0
-    ? data.dailyStats.reduce((sum, s) => sum + s.avgDuration, 0) / data.dailyStats.length
-    : 0;
+  
+  // Calculate weighted average duration based on request counts
+  let avgDuration = 0;
+  if (totalServerRequests > 0) {
+    const totalDuration = data.dailyStats.reduce(
+      (sum, s) => sum + (s.avgDuration * s.serverRequests), 
+      0
+    );
+    avgDuration = totalDuration / totalServerRequests;
+  }
 
   const html = `
     <div class="summary-cards">
@@ -252,8 +259,4 @@ function showError(message) {
 }
 
 // Run init when DOM is ready
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
-}
+document.addEventListener("DOMContentLoaded", init);
