@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { serveStatic } from "hono/deno";
 import { validator } from "hono/validator";
 import { type } from "arktype";
 import { ALLOWED_DOMAINS, type AllowedDomain, type BrowserEvent, type ErrorEvent, type ServerEvent } from "./types.ts";
 import { saveBrowserEvent, saveErrorEvent, saveServerEvent, getRecentBrowserEvents, getRecentServerEvents, getRecentErrorEvents, getDailyStatsRange } from "./storage.ts";
 import { signatureMiddleware } from "./middleware.ts";
 import { browserEventSchema, browserErrorSchema, serverEventSchema, serverErrorSchema } from "./validation.ts";
-import { bundleClientCode } from "./bundle.ts";
 
 const app = new Hono();
 
@@ -215,8 +215,8 @@ app.post(
   }
 );
 
-// Analytics view endpoint
-app.get("/domains/:domain/view/", async (c) => {
+// API endpoint to fetch analytics data
+app.get("/domains/:domain/api/data", async (c) => {
   const domain = c.req.param("domain");
   
   if (!ALLOWED_DOMAINS.includes(domain as AllowedDomain)) {
@@ -232,34 +232,22 @@ app.get("/domains/:domain/view/", async (c) => {
       getDailyStatsRange(domain as AllowedDomain, 30),
     ]);
     
-    const viewData = {
+    return c.json({
       domain,
       browserEvents,
       serverEvents,
       errorEvents,
       dailyStats,
-    };
-    
-    // Read template
-    const templatePath = new URL("./view-template.html", import.meta.url).pathname;
-    let template = await Deno.readTextFile(templatePath);
-    
-    // Replace placeholders
-    template = template.replace(/\{\{DOMAIN\}\}/g, domain);
-    template = template.replace("{{VIEW_DATA}}", JSON.stringify(viewData));
-    template = template.replace("{{BUNDLE_SCRIPT}}", `<script type="module">${bundledClientCode}</script>`);
-    
-    return c.html(template);
+    });
   } catch (error) {
-    console.error("Error rendering view:", error);
-    return c.json({ error: "Failed to render view" }, 500);
+    console.error("Error fetching analytics data:", error);
+    return c.json({ error: "Failed to fetch data" }, 500);
   }
 });
 
-// Bundle client code at startup
-console.log("Bundling client code...");
-const bundledClientCode = await bundleClientCode();
-console.log("Client code bundled successfully");
+// Serve static files for view page
+app.use("/domains/:domain/view/*", serveStatic({ root: "./client" }));
+app.get("/domains/:domain/view/", serveStatic({ path: "./client/index.html" }));
 
 const port = parseInt(Deno.env.get("PORT") || "8000");
 console.log(`Starting server on port ${port}`);

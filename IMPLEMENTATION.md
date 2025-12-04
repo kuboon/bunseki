@@ -6,13 +6,16 @@
 bunseki/
 ├── .devcontainer/
 │   └── devcontainer.json      # Deno development container configuration
+├── client/
+│   ├── index.html             # Analytics dashboard HTML
+│   ├── style.css              # Dashboard styles
+│   └── main.js                # Client-side visualization code
 ├── examples/
 │   ├── browser-client.js      # Browser tracking implementation example
 │   └── server-client.ts       # Server middleware example for Deno/Hono
 ├── scripts/
 │   ├── cleanup.ts             # Data aggregation and cleanup script
 │   ├── show-key.ts            # Display signing keys for domains
-│   ├── build-client.ts        # Bundle client code for view page
 │   └── generate-test-data.ts  # Generate test analytics data
 ├── auth.ts                    # HMAC-SHA256 signature verification
 ├── main.ts                    # Main Hono.js server application
@@ -20,9 +23,6 @@ bunseki/
 ├── storage.ts                 # Deno KV storage operations
 ├── types.ts                   # TypeScript type definitions
 ├── validation.ts              # arktype validation schemas
-├── bundle.ts                  # Client code bundling for view page
-├── view-client.ts             # Client-side visualization code
-├── view-template.html         # HTML template for analytics view
 ├── deno.json                  # Deno configuration and tasks
 ├── .gitignore                 # Git ignore rules
 └── README.md                  # Documentation
@@ -58,11 +58,13 @@ bunseki/
 
 #### Analytics View Endpoint
 - `GET /domains/:domain/view/` - Web-based analytics dashboard
+- `GET /domains/:domain/api/data` - JSON API for analytics data
 
 **Features:**
+- Static file serving using Hono's `serveStatic` middleware
+- Client-side JavaScript fetches data via API
 - Displays graphs and tables of collected analytics data
 - Shows browser events, server events, error events, and daily statistics
-- Client-side visualization using bundled JavaScript
 - Responsive design with CSS-based charts and tables
 - Real-time data from Deno KV storage
 
@@ -165,9 +167,6 @@ await trackServerError(message, stack, url, userAgent);
 ## Running the Server
 
 ```bash
-# Build client bundle (optional, but recommended)
-deno task build-client
-
 # Development with auto-reload
 deno task dev
 

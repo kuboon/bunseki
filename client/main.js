@@ -1,46 +1,23 @@
 // Client-side code for analytics view page
-// This will be bundled using deno-emit library
 
-interface ViewData {
-  domain: string;
-  browserEvents: Array<{
-    timestamp: number;
-    url: string;
-    referrer?: string;
-    userAgent?: string;
-    screenResolution?: string;
-    language?: string;
-    sessionId?: string;
-  }>;
-  serverEvents: Array<{
-    timestamp: number;
-    endpoint: string;
-    method: string;
-    statusCode: number;
-    duration: number;
-    userAgent?: string;
-    ip?: string;
-  }>;
-  errorEvents: Array<{
-    timestamp: number;
-    message: string;
-    stack?: string;
-    url?: string;
-    userAgent?: string;
-    type: "browser" | "server";
-  }>;
-  dailyStats: Array<{
-    date: string;
-    pageViews: number;
-    uniqueSessions: number;
-    errors: number;
-    serverRequests: number;
-    avgDuration: number;
-  }>;
+// Get domain from URL path
+function getDomainFromPath() {
+  const path = window.location.pathname;
+  const match = path.match(/\/domains\/([^\/]+)\/view/);
+  return match ? match[1] : null;
+}
+
+// Fetch analytics data from API
+async function fetchAnalyticsData(domain) {
+  const response = await fetch(`/domains/${domain}/api/data`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch data: ${response.statusText}`);
+  }
+  return response.json();
 }
 
 // Render daily stats chart
-function renderDailyStatsChart(stats: ViewData["dailyStats"]) {
+function renderDailyStatsChart(stats) {
   const chartContainer = document.getElementById("daily-stats-chart");
   if (!chartContainer) return;
 
@@ -75,7 +52,7 @@ function renderDailyStatsChart(stats: ViewData["dailyStats"]) {
 }
 
 // Render stats summary
-function renderStatsSummary(data: ViewData) {
+function renderStatsSummary(data) {
   const summaryContainer = document.getElementById("stats-summary");
   if (!summaryContainer) return;
 
@@ -111,7 +88,7 @@ function renderStatsSummary(data: ViewData) {
 }
 
 // Render browser events table
-function renderBrowserEventsTable(events: ViewData["browserEvents"]) {
+function renderBrowserEventsTable(events) {
   const tableContainer = document.getElementById("browser-events-table");
   if (!tableContainer) return;
 
@@ -150,7 +127,7 @@ function renderBrowserEventsTable(events: ViewData["browserEvents"]) {
 }
 
 // Render server events table
-function renderServerEventsTable(events: ViewData["serverEvents"]) {
+function renderServerEventsTable(events) {
   const tableContainer = document.getElementById("server-events-table");
   if (!tableContainer) return;
 
@@ -190,7 +167,7 @@ function renderServerEventsTable(events: ViewData["serverEvents"]) {
 }
 
 // Render error events table
-function renderErrorEventsTable(events: ViewData["errorEvents"]) {
+function renderErrorEventsTable(events) {
   const tableContainer = document.getElementById("error-events-table");
   if (!tableContainer) return;
 
@@ -227,40 +204,51 @@ function renderErrorEventsTable(events: ViewData["errorEvents"]) {
 }
 
 // Utility function to truncate strings
-function truncate(str: string, length: number): string {
+function truncate(str, length) {
   if (str.length <= length) return str;
   return str.substring(0, length) + "...";
 }
 
-// Extend Window interface to include our injected data
-declare global {
-  interface Window {
-    viewData?: ViewData;
-  }
-}
-
 // Main initialization
-function init() {
-  // Get data from window object (injected by server)
-  const data = window.viewData;
-
-  if (!data) {
-    console.error("No view data found");
+async function init() {
+  const domain = getDomainFromPath();
+  
+  if (!domain) {
+    showError("Could not determine domain from URL");
     return;
   }
 
   // Update domain name
   const domainEl = document.getElementById("domain-name");
   if (domainEl) {
-    domainEl.textContent = data.domain;
+    domainEl.textContent = domain;
   }
 
-  // Render all components
-  renderStatsSummary(data);
-  renderDailyStatsChart(data.dailyStats);
-  renderBrowserEventsTable(data.browserEvents);
-  renderServerEventsTable(data.serverEvents);
-  renderErrorEventsTable(data.errorEvents);
+  try {
+    // Fetch data from API
+    const data = await fetchAnalyticsData(domain);
+
+    // Hide loading, show content
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("content").style.display = "block";
+
+    // Render all components
+    renderStatsSummary(data);
+    renderDailyStatsChart(data.dailyStats);
+    renderBrowserEventsTable(data.browserEvents);
+    renderServerEventsTable(data.serverEvents);
+    renderErrorEventsTable(data.errorEvents);
+  } catch (error) {
+    console.error("Failed to load analytics data:", error);
+    showError(`Failed to load data: ${error.message}`);
+  }
+}
+
+function showError(message) {
+  document.getElementById("loading").style.display = "none";
+  const errorEl = document.getElementById("error");
+  errorEl.textContent = message;
+  errorEl.style.display = "block";
 }
 
 // Run init when DOM is ready
