@@ -1,9 +1,10 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { serveStatic } from "hono/deno";
 import { validator } from "hono/validator";
 import { type } from "arktype";
 import { ALLOWED_DOMAINS, type AllowedDomain, type BrowserEvent, type ErrorEvent, type ServerEvent } from "./types.ts";
-import { saveBrowserEvent, saveErrorEvent, saveServerEvent } from "./storage.ts";
+import { saveBrowserEvent, saveErrorEvent, saveServerEvent, getRecentBrowserEvents, getRecentServerEvents, getRecentErrorEvents, getDailyStatsRange } from "./storage.ts";
 import { signatureMiddleware } from "./middleware.ts";
 import { browserEventSchema, browserErrorSchema, serverEventSchema, serverErrorSchema } from "./validation.ts";
 
@@ -213,6 +214,49 @@ app.post(
     }
   }
 );
+
+/**
+ * API endpoint to fetch analytics data for a domain
+ * Returns recent events and daily statistics in JSON format
+ * 
+ * @route GET /domains/:domain/api/data
+ * @param domain - The domain to fetch data for (must be in ALLOWED_DOMAINS)
+ * @returns JSON with browserEvents, serverEvents, errorEvents, and dailyStats
+ * @throws 403 if domain is not allowed
+ * @throws 500 if data fetching fails
+ */
+app.get("/domains/:domain/api/data", async (c) => {
+  const domain = c.req.param("domain");
+  
+  if (!ALLOWED_DOMAINS.includes(domain as AllowedDomain)) {
+    return c.json({ error: "Domain not allowed" }, 403);
+  }
+  
+  try {
+    // Fetch data from storage
+    const [browserEvents, serverEvents, errorEvents, dailyStats] = await Promise.all([
+      getRecentBrowserEvents(domain as AllowedDomain, 100),
+      getRecentServerEvents(domain as AllowedDomain, 100),
+      getRecentErrorEvents(domain as AllowedDomain, 100),
+      getDailyStatsRange(domain as AllowedDomain, 30),
+    ]);
+    
+    return c.json({
+      domain,
+      browserEvents,
+      serverEvents,
+      errorEvents,
+      dailyStats,
+    });
+  } catch (error) {
+    console.error("Error fetching analytics data:", error);
+    return c.json({ error: "Failed to fetch data" }, 500);
+  }
+});
+
+// Serve static files for view page
+app.use("/domains/:domain/view/*", serveStatic({ root: "./client" }));
+app.get("/domains/:domain/view/", serveStatic({ path: "./client/index.html" }));
 
 const port = parseInt(Deno.env.get("PORT") || "8000");
 console.log(`Starting server on port ${port}`);

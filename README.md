@@ -35,6 +35,23 @@ The server runs on port 8000 by default (configurable via `PORT` environment var
 
 ## API Endpoints
 
+### Analytics View
+
+**Endpoint**: `GET /domains/:domain/view/`
+
+- Web-based analytics dashboard
+- Displays graphs and tables of collected data
+- Shows browser events, server events, errors, and daily statistics
+- Static files served from `client/` directory
+
+### Analytics Data API
+
+**Endpoint**: `GET /domains/:domain/api/data`
+
+- Returns JSON with analytics data
+- Used by the view page to fetch data dynamically
+- Includes browser events, server events, error events, and daily statistics
+
 ### Browser Analytics
 
 **Endpoint**: `POST /domains/:domain/browser`
@@ -113,6 +130,16 @@ deno task show-key
 ```
 
 This will display the signing keys for all configured domains. Keys are automatically generated on first run and stored in Deno KV.
+
+## Testing
+
+Generate test data for development:
+
+```bash
+deno task test-data
+```
+
+This will populate the database with sample browser events, server events, errors, and daily statistics. You can then view the analytics dashboard at `http://localhost:8000/domains/o.kbn.one/view/`.
 
 ## Data Retention
 
