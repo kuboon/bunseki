@@ -1,8 +1,8 @@
 {
   "name": "Bunseki Deno Dev Container",
-  "image": "denoland/deno:latest",
+  "image": "mcr.microsoft.com/devcontainers/base:debian",
   "features": {
-    "ghcr.io/devcontainers/features/git:1": {}
+    "ghcr.io/devcontainers-extra/features/mise:1": {}
   },
   "customizations": {
     "vscode": {
@@ -17,7 +17,5 @@
         "editor.formatOnSave": true
       }
     }
-  },
-  "postCreateCommand": "deno --version",
-  "remoteUser": "deno"
+  }
 }
