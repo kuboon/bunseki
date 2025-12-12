@@ -1,22 +1,20 @@
+import {
+  logsRequestSchema,
+  metricsRequestSchema,
+  tracesRequestSchema,
+} from "../schemas.ts";
+
 import { Hono } from "@hono/hono";
 import { sValidator } from "@hono/standard-validator";
-import {
-  type LogsRequest,
-  logsRequestSchema,
-  type MetricsRequest,
-  metricsRequestSchema,
-  type TracesRequest,
-  tracesRequestSchema,
-} from "./types.ts";
 
-const router = new Hono()
+const router = new Hono().basePath("/v1")
   .post(
     // OTLP/HTTP Traces Endpoint
     "/traces",
     sValidator("json", tracesRequestSchema),
     (c) => {
       try {
-        const body = c.req.valid("json") as TracesRequest;
+        const body = c.req.valid("json");
 
         // TODO: Process and store trace data
         console.log(`Received ${body.resourceSpans.length} resource spans`);
@@ -37,7 +35,7 @@ const router = new Hono()
     sValidator("json", metricsRequestSchema),
     (c) => {
       try {
-        const body = c.req.valid("json") as MetricsRequest;
+        const body = c.req.valid("json");
 
         // TODO: Process and store metric data
         console.log(`Received ${body.resourceMetrics.length} resource metrics`);
@@ -58,7 +56,7 @@ const router = new Hono()
     sValidator("json", logsRequestSchema),
     (c) => {
       try {
-        const body = c.req.valid("json") as LogsRequest;
+        const body = c.req.valid("json");
 
         // TODO: Process and store log data
         console.log(`Received ${body.resourceLogs.length} resource logs`);

@@ -1,21 +1,68 @@
-import { type } from "arktype";
+import { scope, type } from "arktype";
 
 // OTLP/HTTP Validation Schemas
 
 // Attribute value type
-const AttributeValue = type({
-  "stringValue?": "string",
-  "intValue?": "string",
-  "doubleValue?": "number",
-  "boolValue?": "boolean",
-  "bytesValue?": "string",
+const AttributeValueScope = scope({
+  AttributeValue: {
+    "stringValue?": "string",
+    "intValue?": "string",
+    "doubleValue?": "number",
+    "boolValue?": "boolean",
+    "bytesValue?": "string",
+    "arrayValue?": {
+      "values": "AttributeValue[]",
+    },
+  },
 });
+const AttributeValue = AttributeValueScope.export().AttributeValue;
+
+export const bytesToHex = (bytes: Uint8Array) =>
+  Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+
+type AttributePrimitive =
+  | string
+  | number
+  | boolean
+  | Uint8Array
+  | Array<AttributePrimitive>;
+export function attrValue(
+  value: AttributePrimitive,
+): typeof AttributeValue.infer {
+  switch (typeof value) {
+    case "string":
+      return { stringValue: value };
+    case "number":
+      if (Number.isInteger(value)) {
+        return { intValue: value.toString() };
+      } else {
+        return { doubleValue: value };
+      }
+    case "boolean":
+      return { boolValue: value };
+    case "object":
+      if (value instanceof Uint8Array) {
+        return { bytesValue: bytesToHex(value) };
+      } else if (Array.isArray(value)) {
+        return { arrayValue: { values: value.map((v) => attrValue(v)) } };
+      } else throw new Error("Unsupported attribute value type");
+    default:
+      throw new Error("Unsupported attribute value type");
+  }
+}
 
 // Span attribute
 const SpanAttribute = type({
   key: "string",
   value: AttributeValue,
 });
+
+export function spanAttr(
+  key: string,
+  value: Parameters<typeof attrValue>[0],
+): typeof SpanAttribute.infer {
+  return { key, value: attrValue(value) };
+}
 
 // Span event
 const SpanEvent = type({
@@ -24,6 +71,7 @@ const SpanEvent = type({
   "attributes?": SpanAttribute.array(),
   "droppedAttributesCount?": "number",
 });
+export type SpanEventType = typeof SpanEvent.infer;
 
 // Span link
 const SpanLink = type({
@@ -33,6 +81,14 @@ const SpanLink = type({
   "attributes?": SpanAttribute.array(),
   "droppedAttributesCount?": "number",
 });
+
+export const SpanKind = {
+  INTERNAL: 1,
+  SERVER: 2,
+  CLIENT: 3,
+  PRODUCER: 4,
+  CONSUMER: 5,
+};
 
 // Span
 const Span = type({
@@ -55,6 +111,7 @@ const Span = type({
     "message?": "string",
   },
 });
+export type SpanType = typeof Span.infer;
 
 // Span scope spans
 const ScopeSpans = type({
@@ -76,12 +133,18 @@ const ResourceSpans = type({
   scopeSpans: ScopeSpans.array(),
   "schemaUrl?": "string",
 });
+// .pipe((data) => {
+//   if (!data.resource) return data;
+//   if (data.resource.attributes.some((attr) => attr.key === "service.name")) {
+//     return data;;
+//   }
+//   throw new Error("resource.attributes must include service.name");
+// });
 
 // Traces request schema
 export const tracesRequestSchema = type({
   resourceSpans: ResourceSpans.array(),
 });
-export type TracesRequest = typeof tracesRequestSchema.infer;
 
 // Metric attribute
 const MetricAttribute = type({
@@ -153,7 +216,6 @@ const ResourceMetrics = type({
 export const metricsRequestSchema = type({
   resourceMetrics: ResourceMetrics.array(),
 });
-export type MetricsRequest = typeof metricsRequestSchema.infer;
 
 // Log record
 const LogRecord = type({
@@ -200,4 +262,3 @@ const ResourceLogs = type({
 export const logsRequestSchema = type({
   resourceLogs: ResourceLogs.array(),
 });
-export type LogsRequest = typeof logsRequestSchema.infer;
