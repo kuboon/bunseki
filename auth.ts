@@ -11,12 +11,12 @@ export async function verifySignature(
   if (!key) {
     return false;
   }
-  
+
   const encoder = new TextEncoder();
   // Decode hex key to bytes for proper HMAC
   const keyData = hexToBytes(key);
   const messageData = encoder.encode(body);
-  
+
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
     keyData,
@@ -24,7 +24,7 @@ export async function verifySignature(
     false,
     ["sign", "verify"],
   );
-  
+
   const signatureData = hexToBytes(signature);
   return await crypto.subtle.verify(
     "HMAC",
@@ -42,7 +42,7 @@ export async function generateSignature(
   // Decode hex key to bytes for proper HMAC
   const keyData = hexToBytes(key);
   const messageData = encoder.encode(body);
-  
+
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
     keyData,
@@ -50,13 +50,13 @@ export async function generateSignature(
     false,
     ["sign"],
   );
-  
+
   const signatureBuffer = await crypto.subtle.sign(
     "HMAC",
     cryptoKey,
     messageData,
   );
-  
+
   return bytesToHex(new Uint8Array(signatureBuffer));
 }
 
