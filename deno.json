@@ -13,7 +13,7 @@
     "lume/jsx-runtime": "https://cdn.jsdelivr.net/gh/oscarotero/ssx@0.1.13/jsx-runtime.ts",
     "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.14.2/"
   },
-  "unstable": ["bundle", "fmt-component", "temporal"],
+  "unstable": ["bundle", "fmt-component", "temporal", "kv"],
   "lint": {
     "rules": {
       "tags": ["recommended"]
@@ -24,7 +24,8 @@
   },
   "permissions": {
     "serve": {
-      "read": ["./otlp"]
+      "read": ["./otlp", "./client/_site", ".db"],
+      "write": ["./client/_site", ".db"]
     }
   }
 }

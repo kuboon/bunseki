@@ -1,7 +1,13 @@
-import { Hono } from "@hono/hono";
-import { cors } from "@hono/hono/cors";
-import { ALLOWED_DOMAINS } from "./types.ts";
 import otlpRouter from "./otlp/collector/mod.ts";
+import { ALLOWED_DOMAINS } from "./types.ts";
+import { initStorage } from "./storage/mod.ts";
+
+import { Hono } from "@hono/hono";
+import { serveStatic } from "@hono/hono/deno";
+import { cors } from "@hono/hono/cors";
+
+// Initialize storage on startup
+await initStorage();
 
 const app = new Hono();
 
@@ -42,48 +48,12 @@ const corsMiddleware = cors({
   credentials: false,
 });
 
-// Health check endpoint
-app.get("/", (c) => {
-  return c.json({ status: "ok", service: "bunseki" });
-});
-
 // Mount OTLP router
 app.use("/v1", corsMiddleware);
 app.route("/", otlpRouter);
 
-let clientTsPromise: Promise<string> | null = null;
-app.get("/client.ts", async (c) => {
-  if (!clientTsPromise) {
-    clientTsPromise = Deno.readTextFile(
-      new URL("./otlp/exporter/mod.ts", import.meta.url),
-    );
-  }
-  return c.body(await clientTsPromise, {
-    headers: { "Content-Type": "application/typescript" },
-  });
-});
-
-let clientBundlePromise: Promise<Deno.bundle.Result> | null = null;
-app.get("/client.js", async (c) => {
-  if (!clientBundlePromise) {
-    const entrypoints = [
-      new URL("./otlp/exporter/mod.ts", import.meta.url).toString(),
-    ];
-    clientBundlePromise = Deno.bundle({
-      entrypoints,
-      write: false,
-      sourcemap: "inline",
-    });
-  }
-  const ret = await clientBundlePromise;
-  if (ret.errors.length > 0) {
-    console.error("Error bundling client.ts:", ret.errors);
-    return c.body("Internal Server Error", { status: 500 });
-  }
-  return c.body(ret.outputFiles![0].text(), {
-    headers: { "Content-Type": "application/javascript" },
-  });
-});
+// Serve static files from Lume build output
+app.get("*", serveStatic({ root: "./client/_site" }));
 
 export default {
   fetch: app.fetch,
