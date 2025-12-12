@@ -1,15 +1,13 @@
 // Storage layer for OTLP telemetry data using Deno KV
 
-import { resolve } from "node:path";
 import type { SpanType } from "../otlp/schemas.ts";
-import { crypto } from "jsr:@std/crypto@1/crypto";
 
 // Initialize Deno KV
 let kv: Deno.Kv;
 
 export async function initStorage() {
   if (!kv) {
-    kv = await Deno.openKv(import.meta.resolve("../.db/otlp_storage").replace("file://", ""));
+    kv = await Deno.openKv();
   }
   return kv;
 }
@@ -55,12 +53,24 @@ export interface ServiceInfo {
 }
 
 // === Key Patterns ===
-// ["services"] -> Set of service names
-// ["service", serviceName, "info"] -> ServiceInfo
-// ["pv", serviceName, dateISO, path] -> PageViewCount
-// ["spans", serviceName, timestamp, spanId] -> SpanRecord
-// ["errors", serviceName, errorHash] -> ErrorRecord
-// ["errors_by_time", serviceName, timestamp] -> errorHash
+
+export const keys = {
+  services: () => ["services"] as const,
+  serviceInfo: (name: string) => [name, "info"] as const,
+  pv: (serviceName: string, dateISO: string, path: string) =>
+    [serviceName, "pv", dateISO, path] as const,
+  pvByDate: (serviceName: string, dateISO: string) =>
+    [serviceName, "pv", dateISO] as const,
+  span: (serviceName: string, timestamp: number, spanId: string) =>
+    [serviceName, "spans", timestamp, spanId] as const,
+  spansByService: (serviceName: string) => [serviceName, "spans"] as const,
+  error: (serviceName: string, errorHash: string) =>
+    [serviceName, "errors", errorHash] as const,
+  errorByTime: (serviceName: string, timestamp: number) =>
+    [serviceName, "errors_by_time", timestamp] as const,
+  errorsByTimePrefix: (serviceName: string) =>
+    [serviceName, "errors_by_time"] as const,
+};
 
 // === Helper Functions ===
 
@@ -83,14 +93,14 @@ export async function registerService(serviceName: string) {
   const now = Date.now();
 
   // Add to services set
-  const servicesKey = ["services"];
+  const servicesKey = keys.services();
   const services = await kv.get<string[]>(servicesKey);
   const serviceSet = new Set(services.value || []);
   serviceSet.add(serviceName);
   await kv.set(servicesKey, Array.from(serviceSet));
 
   // Update service info
-  const infoKey = ["service", serviceName, "info"];
+  const infoKey = keys.serviceInfo(serviceName);
   const info = await kv.get<ServiceInfo>(infoKey);
   if (info.value) {
     await kv.set(infoKey, {
@@ -108,7 +118,7 @@ export async function registerService(serviceName: string) {
 
 export async function listServices(): Promise<ServiceInfo[]> {
   const kv = getKv();
-  const servicesKey = ["services"];
+  const servicesKey = keys.services();
   const services = await kv.get<string[]>(servicesKey);
 
   if (!services.value) {
@@ -117,7 +127,7 @@ export async function listServices(): Promise<ServiceInfo[]> {
 
   const infos: ServiceInfo[] = [];
   for (const name of services.value) {
-    const info = await kv.get<ServiceInfo>(["service", name, "info"]);
+    const info = await kv.get<ServiceInfo>(keys.serviceInfo(name));
     if (info.value) {
       infos.push(info.value);
     }
@@ -138,7 +148,7 @@ export async function incrementPageView(
   await registerService(serviceName);
 
   const dateISO = getDateISO(timestamp);
-  const key = ["pv", serviceName, dateISO, path];
+  const key = keys.pv(serviceName, dateISO, path);
 
   const existing = await kv.get<PageViewCount>(key);
   const newCount: PageViewCount = {
@@ -162,12 +172,12 @@ export async function getPageViews(
   const end = new Date(endDate);
 
   for (
-    let d = new Date(start);
+    const d = new Date(start);
     d <= end;
     d.setDate(d.getDate() + 1)
   ) {
     const dateISO = d.toISOString().split("T")[0];
-    const prefix = ["pv", serviceName, dateISO];
+    const prefix = keys.pvByDate(serviceName, dateISO);
     const entries = kv.list<PageViewCount>({ prefix });
 
     const pathCounts = new Map<string, number>();
@@ -227,7 +237,7 @@ export async function storeSpan(
     data: span,
   };
 
-  const key = ["spans", serviceName, timestamp, span.spanId];
+  const key = keys.span(serviceName, timestamp, span.spanId);
 
   // Set with expiration (30 days)
   const expiresIn = SPAN_RETENTION_DAYS * 24 * 60 * 60 * 1000;
@@ -240,7 +250,7 @@ export async function getSpan(
   spanId: string,
 ): Promise<SpanRecord | null> {
   const kv = getKv();
-  const key = ["spans", serviceName, timestamp, spanId];
+  const key = keys.span(serviceName, timestamp, spanId);
   const result = await kv.get<SpanRecord>(key);
   return result.value;
 }
@@ -250,7 +260,7 @@ export async function getRecentSpans(
   limit = 100,
 ): Promise<SpanRecord[]> {
   const kv = getKv();
-  const prefix = ["spans", serviceName];
+  const prefix = keys.spansByService(serviceName);
   const entries = kv.list<SpanRecord>({ prefix }, { reverse: true });
 
   const spans: SpanRecord[] = [];
@@ -288,7 +298,7 @@ export async function storeError(
     parseInt(span.startTimeUnixNano) / 1_000_000,
   );
 
-  const errorKey = ["errors", serviceName, errorHash];
+  const errorKey = keys.error(serviceName, errorHash);
   const existing = await kv.get<ErrorRecord>(errorKey);
 
   let errorRecord: ErrorRecord;
@@ -316,7 +326,7 @@ export async function storeError(
   await kv.set(errorKey, errorRecord);
 
   // Index by time for recent errors query
-  const timeKey = ["errors_by_time", serviceName, timestamp];
+  const timeKey = keys.errorByTime(serviceName, timestamp);
   await kv.set(timeKey, errorHash);
 
   // Cleanup old errors (keep last 50)
@@ -327,7 +337,7 @@ async function cleanupOldErrors(serviceName: string, keepCount = 50) {
   const kv = getKv();
 
   // Get all errors by time
-  const prefix = ["errors_by_time", serviceName];
+  const prefix = keys.errorsByTimePrefix(serviceName);
   const entries = kv.list<string>({ prefix }, { reverse: true });
 
   const hashes: string[] = [];
@@ -342,7 +352,7 @@ async function cleanupOldErrors(serviceName: string, keepCount = 50) {
   if (uniqueHashes.length > keepCount) {
     const toDelete = uniqueHashes.slice(keepCount);
     for (const hash of toDelete) {
-      await kv.delete(["errors", serviceName, hash]);
+      await kv.delete(keys.error(serviceName, hash));
     }
   }
 }
@@ -352,7 +362,7 @@ export async function getRecentErrors(
   limit = 10,
 ): Promise<ErrorRecord[]> {
   const kv = getKv();
-  const prefix = ["errors_by_time", serviceName];
+  const prefix = keys.errorsByTimePrefix(serviceName);
   const entries = kv.list<string>({ prefix }, { reverse: true });
 
   const errors: ErrorRecord[] = [];
@@ -367,7 +377,7 @@ export async function getRecentErrors(
     if (seenHashes.has(errorHash)) continue;
     seenHashes.add(errorHash);
 
-    const errorKey = ["errors", serviceName, errorHash];
+    const errorKey = keys.error(serviceName, errorHash);
     const errorRecord = await kv.get<ErrorRecord>(errorKey);
     if (errorRecord.value) {
       errors.push(errorRecord.value);
@@ -384,7 +394,7 @@ export async function getError(
   errorHash: string,
 ): Promise<ErrorRecord | null> {
   const kv = getKv();
-  const key = ["errors", serviceName, errorHash];
+  const key = keys.error(serviceName, errorHash);
   const result = await kv.get<ErrorRecord>(key);
   return result.value;
 }

@@ -10,6 +10,11 @@ import type { AppType } from "../collector/mod.ts";
 
 import { hc } from "@hono/hono/client";
 
+let dateNow = () => Date.now();
+export function _setNow(fn: () => number) {
+  dateNow = fn;
+}
+
 export class OtlpExporter {
   readonly scope = { name: "honotlp", version: "1.0.0" };
   client: ReturnType<typeof hc<AppType>>;
@@ -37,7 +42,7 @@ export class OtlpExporter {
   }
 
   private sendPVMetric(path: string) {
-    const now = Date.now();
+    const now = dateNow();
     const timeUnixNano = String(BigInt(now) * BigInt(1e6));
 
     const metric = {
@@ -160,7 +165,7 @@ class Trace {
 }
 
 const generateSpanId = () => bytesToHex(randomBytes(8));
-const unixNanoString = (now = Date.now()) => String(BigInt(now) * BigInt(1e6));
+const unixNanoString = (now = dateNow()) => String(BigInt(now) * BigInt(1e6));
 const isPromise = (obj: unknown): obj is Promise<unknown> =>
   typeof obj === "object" && obj !== null && "finally" in obj &&
   typeof obj.finally === "function";
@@ -171,7 +176,7 @@ type SpanOpts = {
 };
 class Span {
   readonly name: string;
-  readonly startAt = Date.now();
+  readonly startAt = dateNow();
   endAt: number | null = null;
   readonly spanId = generateSpanId();
   readonly parentSpanId?: string;
@@ -184,7 +189,7 @@ class Span {
     this.parentSpanId = opts.parentSpanId;
   }
   end() {
-    this.endAt = Date.now();
+    this.endAt = dateNow();
   }
   get traceparent() {
     return `00-${this.trace.traceId}-${this.spanId}-01`;
@@ -223,7 +228,7 @@ class Span {
       key,
       value,
     }));
-    this.endAt = this.endAt || Date.now();
+    this.endAt = this.endAt || dateNow();
     return {
       traceId: this.trace.traceId,
       kind: this.trace.spanKind,
