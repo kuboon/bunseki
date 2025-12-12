@@ -29,7 +29,59 @@ export class OtlpExporter {
     span.addAttribute("url.full", location.href);
     span.addAttribute("url.path", location.pathname);
     span.addAttribute("http.method", "GET");
+
+    // Send PV count metric
+    this.sendPVMetric(location.pathname);
+
     return span;
+  }
+
+  private sendPVMetric(path: string) {
+    const now = Date.now();
+    const timeUnixNano = String(BigInt(now) * BigInt(1e6));
+
+    const metric = {
+      resourceMetrics: [
+        {
+          resource: {
+            attributes: [
+              { key: "service.name", value: { stringValue: this.serviceName } },
+            ],
+          },
+          scopeMetrics: [
+            {
+              scope: this.scope,
+              metrics: [
+                {
+                  name: "page_views",
+                  description: "Page view count",
+                  unit: "1",
+                  sum: {
+                    dataPoints: [
+                      {
+                        attributes: [
+                          { key: "url.path", value: { stringValue: path } },
+                        ],
+                        startTimeUnixNano: timeUnixNano,
+                        timeUnixNano: timeUnixNano,
+                        asInt: "1",
+                      },
+                    ],
+                    aggregationTemporality: 2, // DELTA
+                    isMonotonic: true,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    // Send metric asynchronously (fire and forget)
+    this.client.v1.metrics.$post({ json: metric }).catch((err) => {
+      console.error("Failed to send PV metric:", err);
+    });
   }
   onRequest(req: Request) {
     const spanKind = SpanKind.SERVER;
