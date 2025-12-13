@@ -6,7 +6,7 @@ import {
 
 import { Hono } from "@hono/hono";
 import { sValidator } from "@hono/standard-validator";
-import { incrementPageView, storeError, storeSpan } from "../../storage/mod.ts";
+import { incrementCounter, storeError, storeSpan } from "../../storage/mod.ts";
 
 // Helper to extract service name from resource attributes
 function getServiceName(
@@ -108,19 +108,36 @@ const router = new Hono().basePath("/v1")
 
           for (const scopeMetric of resourceMetric.scopeMetrics) {
             for (const metric of scopeMetric.metrics) {
-              // Handle page_views metric
-              if (metric.name === "page_views" && metric.sum) {
+              // Handle sum metrics (counters)
+              if (metric.sum) {
                 for (const dataPoint of metric.sum.dataPoints) {
-                  const pathAttr = dataPoint.attributes?.find(
-                    (a) => a.key === "url.path",
+                  // Try to find a meaningful key from attributes
+                  // Prioritize url.path, then location, then http.target
+                  const keyAttr = dataPoint.attributes?.find(
+                    (a) =>
+                      a.key === "url.path" ||
+                      a.key === "location" ||
+                      a.key === "http.target",
                   );
-                  const path = pathAttr?.value?.stringValue || "/";
-                  const count = parseInt(dataPoint.asInt || "1");
+                  const keyName = keyAttr?.value?.stringValue || "/";
+
+                  const count = dataPoint.asInt
+                    ? parseInt(dataPoint.asInt)
+                    : dataPoint.asDouble
+                    ? Math.round(dataPoint.asDouble)
+                    : 1;
+
                   const timestamp = Math.floor(
                     parseInt(dataPoint.timeUnixNano) / 1_000_000,
                   );
 
-                  await incrementPageView(serviceName, path, timestamp, count);
+                  await incrementCounter(
+                    serviceName,
+                    metric.name,
+                    keyName,
+                    timestamp,
+                    count,
+                  );
                 }
               }
             }

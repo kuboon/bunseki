@@ -1,4 +1,3 @@
-
 export const bytesToHex = (bytes: Uint8Array) =>
   Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
 
@@ -10,7 +9,8 @@ export const hexToBytes = (hex: string) => {
   return bytes;
 };
 
-export const bytesToBase64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
+export const bytesToBase64 = (bytes: Uint8Array) =>
+  btoa(String.fromCharCode(...bytes));
 
 export const base64ToBytes = (base64: string) => {
   const binString = atob(base64);
@@ -54,7 +54,9 @@ export function toAttributeValue(value: AttributePrimitive): AttributeValue {
         return { bytesValue: bytesToBase64(value) };
       } else if (Array.isArray(value)) {
         return { arrayValue: { values: value.map(toAttributeValue) } };
-      } else throw new Error("Unsupported attribute value type: " + typeof value);
+      } else {throw new Error(
+          "Unsupported attribute value type: " + typeof value,
+        );}
     default:
       throw new Error("Unsupported attribute value type: " + typeof value);
   }

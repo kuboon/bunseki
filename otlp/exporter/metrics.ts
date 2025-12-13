@@ -53,7 +53,13 @@ export function sendPVMetric(exporter: ExporterConfig, path: string) {
   });
 }
 
-export function sendRedirectMetric(exporter: ExporterConfig, oldPath: string, newPath: string, route?: string, statusCode: number = 301) {
+export function sendRedirectMetric(
+  exporter: ExporterConfig,
+  oldPath: string,
+  newPath: string,
+  route?: string,
+  statusCode: number = 301,
+) {
   const now = dateNow();
   const timeUnixNano = toUnixNano(now);
 

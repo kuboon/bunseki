@@ -49,7 +49,12 @@ export class OtlpExporter {
     return span;
   }
 
-  onRedirect(oldPath: string, newPath: string, route?: string, statusCode: number = 301) {
+  onRedirect(
+    oldPath: string,
+    newPath: string,
+    route?: string,
+    statusCode: number = 301,
+  ) {
     sendRedirectMetric(this, oldPath, newPath, route, statusCode);
   }
 }

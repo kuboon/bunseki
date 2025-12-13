@@ -57,10 +57,14 @@ export interface ServiceInfo {
 export const keys = {
   services: () => ["services"] as const,
   serviceInfo: (name: string) => [name, "info"] as const,
-  pv: (serviceName: string, dateISO: string, path: string) =>
-    [serviceName, "pv", dateISO, path] as const,
-  pvByDate: (serviceName: string, dateISO: string) =>
-    [serviceName, "pv", dateISO] as const,
+  counter: (
+    serviceName: string,
+    counterName: string,
+    dateISO: string,
+    key: string,
+  ) => [serviceName, "counters", counterName, dateISO, key] as const,
+  counterByDate: (serviceName: string, counterName: string, dateISO: string) =>
+    [serviceName, "counters", counterName, dateISO] as const,
   span: (serviceName: string, timestamp: number, spanId: string) =>
     [serviceName, "spans", timestamp, spanId] as const,
   spansByService: (serviceName: string) => [serviceName, "spans"] as const,
@@ -138,9 +142,10 @@ export async function listServices(): Promise<ServiceInfo[]> {
 
 // === Page View (Metrics) Storage ===
 
-export async function incrementPageView(
+export async function incrementCounter(
   serviceName: string,
-  path: string,
+  counterName: string,
+  keyName: string,
   timestamp: number,
   count = 1,
 ) {
@@ -148,15 +153,23 @@ export async function incrementPageView(
   await registerService(serviceName);
 
   const dateISO = getDateISO(timestamp);
-  const key = keys.pv(serviceName, dateISO, path);
+  const key = keys.counter(serviceName, counterName, dateISO, keyName);
 
-  const existing = await kv.get<PageViewCount>(key);
-  const newCount: PageViewCount = {
-    count: (existing.value?.count || 0) + count,
-    lastUpdated: timestamp,
-  };
+  let committed = false;
+  while (!committed) {
+    const existing = await kv.get<PageViewCount>(key);
+    const newCount: PageViewCount = {
+      count: (existing.value?.count || 0) + count,
+      lastUpdated: timestamp,
+    };
 
-  await kv.set(key, newCount);
+    const res = await kv.atomic()
+      .check(existing)
+      .set(key, newCount)
+      .commit();
+
+    committed = res.ok;
+  }
 }
 
 export async function getPageViews(
@@ -177,12 +190,12 @@ export async function getPageViews(
     d.setDate(d.getDate() + 1)
   ) {
     const dateISO = d.toISOString().split("T")[0];
-    const prefix = keys.pvByDate(serviceName, dateISO);
+    const prefix = keys.counterByDate(serviceName, "page_views", dateISO);
     const entries = kv.list<PageViewCount>({ prefix });
 
     const pathCounts = new Map<string, number>();
     for await (const entry of entries) {
-      const path = entry.key[3] as string;
+      const path = entry.key[4] as string;
       pathCounts.set(path, entry.value.count);
     }
 
