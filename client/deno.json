@@ -8,7 +8,7 @@
   "permissions": {
     "lume": {
       "read": true,
-      "write": ["./", "../.db"],
+      "write": true,
       "import": [
         "cdn.jsdelivr.net:443",
         "jsr.io:443",

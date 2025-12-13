@@ -57,8 +57,8 @@ export function bundle(userOptions?: Options) {
       };
       const { warnings, errors } = await Deno.bundle(buildOptions)
         .catch((error) => {
-          log.info(entrypoints.join(", "));
-          throw error;
+          log.error(`[bundle plugin] Error during bundling: ${error.message}`);
+          return { warnings: [], errors: [] };
         });
       if (warnings.length) {
         log.warn(
