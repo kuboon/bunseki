@@ -12,7 +12,7 @@ export class OtlpExporter {
   client: ReturnType<typeof hc<AppType>>;
   constructor(
     public serviceName: string,
-    private endpoint: string = globalThis.location.origin,
+    private endpoint: string = "https://bunseki.kbn.one/otlp",
   ) {
     this.client = hc<AppType>(this.endpoint);
   }

@@ -49,8 +49,8 @@ const corsMiddleware = cors({
 });
 
 // Mount OTLP router
-app.use("/v1", corsMiddleware);
-app.route("/", otlpRouter);
+app.use("/otlp", corsMiddleware);
+app.route("/otlp", otlpRouter);
 
 // Serve static files from Lume build output
 app.get("*", serveStatic({ root: "./client/_site" }));
