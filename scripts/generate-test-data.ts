@@ -3,7 +3,12 @@
 // Script to generate test data for the analytics view
 // Usage: deno run --allow-net --allow-env --unstable-kv scripts/generate-test-data.ts
 
-import { saveBrowserEvent, saveServerEvent, saveErrorEvent, saveDailyStats } from "../storage.ts";
+import {
+  saveBrowserEvent,
+  saveDailyStats,
+  saveErrorEvent,
+  saveServerEvent,
+} from "../storage.ts";
 import type { AllowedDomain } from "../types.ts";
 
 const DOMAIN: AllowedDomain = "o.kbn.one";
@@ -64,7 +69,7 @@ for (let i = 0; i < 7; i++) {
   const date = new Date(today);
   date.setDate(date.getDate() - i);
   const dateStr = date.toISOString().split("T")[0];
-  
+
   await saveDailyStats({
     domain: DOMAIN,
     date: dateStr,

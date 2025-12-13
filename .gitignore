@@ -1,9 +1,4 @@
-# Deno
-.env
-.deno/
-
 # IDE
-.vscode/
 .idea/
 
 # OS
@@ -12,3 +7,5 @@ Thumbs.db
 
 # Logs
 *.log
+.db/
+.env

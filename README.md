@@ -1,11 +1,9 @@
 # bunseki
-GA like tool for deno deploy &amp; deno KV
+
+Simple OTLP collector on deno deploy &amp; deno KV
 
 ## Features
 
-- **Browser Analytics**: Collect Google Analytics-like metrics from browsers
-- **Server Analytics**: Track server-side metrics with signature-based authentication
-- **Error Reporting**: Sentry-like error tracking for both browser and server
 - **Data Retention**: Automatically aggregates data older than 1 month into daily statistics
 - **Deno KV Storage**: All data stored in Deno KV
 - **Domain-based**: Supports multiple domains with separate tracking
@@ -35,23 +33,6 @@ The server runs on port 8000 by default (configurable via `PORT` environment var
 
 ## API Endpoints
 
-### Analytics View
-
-**Endpoint**: `GET /domains/:domain/view/`
-
-- Web-based analytics dashboard
-- Displays graphs and tables of collected data
-- Shows browser events, server events, errors, and daily statistics
-- Static files served from `client/` directory
-
-### Analytics Data API
-
-**Endpoint**: `GET /domains/:domain/api/data`
-
-- Returns JSON with analytics data
-- Used by the view page to fetch data dynamically
-- Includes browser events, server events, error events, and daily statistics
-
 ### Browser Analytics
 
 **Endpoint**: `POST /domains/:domain/browser`
@@ -60,6 +41,7 @@ The server runs on port 8000 by default (configurable via `PORT` environment var
 - No authentication required
 
 **Request Body**:
+
 ```json
 {
   "url": "https://example.com/page",
@@ -78,6 +60,7 @@ The server runs on port 8000 by default (configurable via `PORT` environment var
 - No authentication required
 
 **Request Body**:
+
 ```json
 {
   "message": "Error message",
@@ -94,6 +77,7 @@ The server runs on port 8000 by default (configurable via `PORT` environment var
 - Signature should be computed over the request body
 
 **Request Body**:
+
 ```json
 {
   "endpoint": "/api/users",
@@ -112,6 +96,7 @@ The server runs on port 8000 by default (configurable via `PORT` environment var
 - Requires HMAC-SHA256 signature in `x-signature` header
 
 **Request Body**:
+
 ```json
 {
   "message": "Error message",
@@ -131,16 +116,6 @@ deno task show-key
 
 This will display the signing keys for all configured domains. Keys are automatically generated on first run and stored in Deno KV.
 
-## Testing
-
-Generate test data for development:
-
-```bash
-deno task test-data
-```
-
-This will populate the database with sample browser events, server events, errors, and daily statistics. You can then view the analytics dashboard at `http://localhost:8000/domains/o.kbn.one/view/`.
-
 ## Data Retention
 
 Run the cleanup task to aggregate old data:
@@ -150,6 +125,7 @@ deno task cleanup
 ```
 
 This should be run periodically (e.g., via cron job) to:
+
 - Aggregate raw events older than 1 month into daily statistics
 - Delete old raw event data to save storage
 
