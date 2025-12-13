@@ -7,18 +7,26 @@ import { hc } from "@hono/hono/client";
 
 export { _setNow } from "./utils.ts";
 
+type NewOptions = {
+  serviceName: string;
+  endpoint?: string;
+};
+
 export class OtlpExporter {
   readonly scope = { name: "honotlp", version: "1.0.0" };
+  readonly serviceName: string;
+  private readonly endpoint: string;
   client: ReturnType<typeof hc<AppType>>;
-  constructor(
-    public serviceName: string,
-    private endpoint: string = "https://bunseki.kbn.one/otlp",
-  ) {
+  constructor(options: NewOptions) {
+    this.serviceName = options.serviceName;
+    this.endpoint = options.endpoint ?? "https://bunseki.kbn.one/otlp";
     this.client = hc<AppType>(this.endpoint);
   }
   newTrace(opts: TraceOpts = {}): Trace {
     return new Trace(this, opts);
   }
+
+  /// for Client
   onPageLoad(location = new URL(globalThis.location.href)) {
     const spanKind = SpanKind.CLIENT;
     const trace = this.newTrace({ spanKind });
@@ -33,6 +41,7 @@ export class OtlpExporter {
     return span;
   }
 
+  /// for Server
   onRequest(req: Request) {
     const spanKind = SpanKind.SERVER;
     const traceparent = req.headers.get("traceparent");
@@ -49,6 +58,7 @@ export class OtlpExporter {
     return span;
   }
 
+  /// for Server
   onRedirect(
     oldPath: string,
     newPath: string,

@@ -48,7 +48,7 @@ const corsMiddleware = cors({
   credentials: false,
 });
 
-app.use("/client.*", corsMiddleware);
+app.use("/exporter.browser.js", corsMiddleware);
 app.use("/otlp/*", corsMiddleware);
 // Mount OTLP router
 app.route("/otlp", otlpRouter);

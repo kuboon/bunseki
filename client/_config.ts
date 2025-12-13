@@ -17,7 +17,8 @@ site.use(tailwindcss());
 site.use(source_maps());
 site.use(pagefind());
 
-site.add("client.ts");
+site.add("exporter.browser.ts");
+site.add("exporter.server.ts");
 site.add("styles");
 
 export default site;
