@@ -41,6 +41,7 @@ The server runs on port 8000 by default (configurable via `PORT` environment var
 - No authentication required
 
 **Request Body**:
+
 ```json
 {
   "url": "https://example.com/page",
@@ -59,6 +60,7 @@ The server runs on port 8000 by default (configurable via `PORT` environment var
 - No authentication required
 
 **Request Body**:
+
 ```json
 {
   "message": "Error message",
@@ -75,6 +77,7 @@ The server runs on port 8000 by default (configurable via `PORT` environment var
 - Signature should be computed over the request body
 
 **Request Body**:
+
 ```json
 {
   "endpoint": "/api/users",
@@ -93,6 +96,7 @@ The server runs on port 8000 by default (configurable via `PORT` environment var
 - Requires HMAC-SHA256 signature in `x-signature` header
 
 **Request Body**:
+
 ```json
 {
   "message": "Error message",
@@ -121,6 +125,7 @@ deno task cleanup
 ```
 
 This should be run periodically (e.g., via cron job) to:
+
 - Aggregate raw events older than 1 month into daily statistics
 - Delete old raw event data to save storage
 

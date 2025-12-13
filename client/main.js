@@ -56,16 +56,22 @@ function renderStatsSummary(data) {
   const summaryContainer = document.getElementById("stats-summary");
   if (!summaryContainer) return;
 
-  const totalPageViews = data.dailyStats.reduce((sum, s) => sum + s.pageViews, 0);
+  const totalPageViews = data.dailyStats.reduce(
+    (sum, s) => sum + s.pageViews,
+    0,
+  );
   const totalErrors = data.dailyStats.reduce((sum, s) => sum + s.errors, 0);
-  const totalServerRequests = data.dailyStats.reduce((sum, s) => sum + s.serverRequests, 0);
-  
+  const totalServerRequests = data.dailyStats.reduce(
+    (sum, s) => sum + s.serverRequests,
+    0,
+  );
+
   // Calculate weighted average duration based on request counts
   let avgDuration = 0;
   if (totalServerRequests > 0) {
     const totalDuration = data.dailyStats.reduce(
-      (sum, s) => sum + (s.avgDuration * s.serverRequests), 
-      0
+      (sum, s) => sum + (s.avgDuration * s.serverRequests),
+      0,
     );
     avgDuration = totalDuration / totalServerRequests;
   }
@@ -118,7 +124,9 @@ function renderBrowserEventsTable(events) {
       return `
             <tr>
               <td>${date.toLocaleString()}</td>
-              <td class="url-cell" title="${event.url}">${truncate(event.url, 50)}</td>
+              <td class="url-cell" title="${event.url}">${
+        truncate(event.url, 50)
+      }</td>
               <td>${event.referrer || "-"}</td>
               <td>${event.screenResolution || "-"}</td>
               <td>${event.language || "-"}</td>
@@ -159,7 +167,9 @@ function renderServerEventsTable(events) {
             <tr>
               <td>${date.toLocaleString()}</td>
               <td>${event.method}</td>
-              <td class="url-cell" title="${event.endpoint}">${truncate(event.endpoint, 40)}</td>
+              <td class="url-cell" title="${event.endpoint}">${
+        truncate(event.endpoint, 40)
+      }</td>
               <td class="${statusClass}">${event.statusCode}</td>
               <td>${event.duration}</td>
             </tr>
@@ -197,7 +207,9 @@ function renderErrorEventsTable(events) {
             <tr>
               <td>${date.toLocaleString()}</td>
               <td><span class="badge ${event.type}">${event.type}</span></td>
-              <td class="error-message" title="${event.message}">${truncate(event.message, 60)}</td>
+              <td class="error-message" title="${event.message}">${
+        truncate(event.message, 60)
+      }</td>
               <td>${event.url || "-"}</td>
             </tr>
           `;
@@ -219,7 +231,7 @@ function truncate(str, length) {
 // Main initialization
 async function init() {
   const domain = getDomainFromPath();
-  
+
   if (!domain) {
     showError("Could not determine domain from URL");
     return;
