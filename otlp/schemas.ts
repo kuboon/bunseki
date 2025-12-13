@@ -2,8 +2,8 @@ import { scope, type } from "arktype";
 
 // OTLP/HTTP Validation Schemas
 
-// Attribute value type
-const AttributeValueScope = scope({
+// https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/common/v1/common.proto
+const AnyValueScope = scope({
   AttributeValue: {
     "stringValue?": "string",
     "intValue?": "string",
@@ -15,60 +15,19 @@ const AttributeValueScope = scope({
     },
   },
 });
-const AttributeValue = AttributeValueScope.export().AttributeValue;
+const AnyValue = AnyValueScope.export().AttributeValue;
+export type AnyValueType = typeof AnyValue.infer;
 
-export const bytesToHex = (bytes: Uint8Array) =>
-  Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
-
-type AttributePrimitive =
-  | string
-  | number
-  | boolean
-  | Uint8Array
-  | Array<AttributePrimitive>;
-export function attrValue(
-  value: AttributePrimitive,
-): typeof AttributeValue.infer {
-  switch (typeof value) {
-    case "string":
-      return { stringValue: value };
-    case "number":
-      if (Number.isInteger(value)) {
-        return { intValue: value.toString() };
-      } else {
-        return { doubleValue: value };
-      }
-    case "boolean":
-      return { boolValue: value };
-    case "object":
-      if (value instanceof Uint8Array) {
-        return { bytesValue: bytesToHex(value) };
-      } else if (Array.isArray(value)) {
-        return { arrayValue: { values: value.map((v) => attrValue(v)) } };
-      } else throw new Error("Unsupported attribute value type");
-    default:
-      throw new Error("Unsupported attribute value type");
-  }
-}
-
-// Span attribute
-const SpanAttribute = type({
+const KeyValue = type({
   key: "string",
-  value: AttributeValue,
+  value: AnyValue,
 });
-
-export function spanAttr(
-  key: string,
-  value: Parameters<typeof attrValue>[0],
-): typeof SpanAttribute.infer {
-  return { key, value: attrValue(value) };
-}
 
 // Span event
 const SpanEvent = type({
   name: "string",
   timeUnixNano: "string",
-  "attributes?": SpanAttribute.array(),
+  "attributes?": KeyValue.array(),
   "droppedAttributesCount?": "number",
 });
 export type SpanEventType = typeof SpanEvent.infer;
@@ -78,7 +37,7 @@ const SpanLink = type({
   traceId: "string",
   spanId: "string",
   "traceState?": "string",
-  "attributes?": SpanAttribute.array(),
+  "attributes?": KeyValue.array(),
   "droppedAttributesCount?": "number",
 });
 
@@ -100,7 +59,7 @@ const Span = type({
   "kind?": "number",
   startTimeUnixNano: "string",
   endTimeUnixNano: "string",
-  "attributes?": SpanAttribute.array(),
+  "attributes?": KeyValue.array(),
   "droppedAttributesCount?": "number",
   "events?": SpanEvent.array(),
   "droppedEventsCount?": "number",
@@ -118,7 +77,7 @@ const ScopeSpans = type({
   "scope?": {
     name: "string",
     "version?": "string",
-    "attributes?": SpanAttribute.array(),
+    "attributes?": KeyValue.array(),
   },
   spans: Span.array(),
   "schemaUrl?": "string",
@@ -127,7 +86,7 @@ const ScopeSpans = type({
 // Resource spans
 const ResourceSpans = type({
   "resource?": {
-    attributes: SpanAttribute.array(),
+    attributes: KeyValue.array(),
     "droppedAttributesCount?": "number",
   },
   scopeSpans: ScopeSpans.array(),
@@ -146,20 +105,9 @@ export const tracesRequestSchema = type({
   resourceSpans: ResourceSpans.array(),
 });
 
-// Metric attribute
-const MetricAttribute = type({
-  key: "string",
-  value: {
-    "stringValue?": "string",
-    "intValue?": "string",
-    "doubleValue?": "number",
-    "boolValue?": "boolean",
-  },
-});
-
 // Number data point
 const NumberDataPoint = type({
-  "attributes?": MetricAttribute.array(),
+  "attributes?": KeyValue.array(),
   startTimeUnixNano: "string",
   timeUnixNano: "string",
   "asDouble?": "number",
@@ -196,7 +144,7 @@ const ScopeMetrics = type({
   "scope?": {
     name: "string",
     "version?": "string",
-    "attributes?": MetricAttribute.array(),
+    "attributes?": KeyValue.array(),
   },
   metrics: Metric.array(),
   "schemaUrl?": "string",
@@ -205,7 +153,7 @@ const ScopeMetrics = type({
 // Resource metrics
 const ResourceMetrics = type({
   "resource?": {
-    attributes: MetricAttribute.array(),
+    attributes: KeyValue.array(),
     "droppedAttributesCount?": "number",
   },
   scopeMetrics: ScopeMetrics.array(),
@@ -223,14 +171,8 @@ const LogRecord = type({
   "observedTimeUnixNano?": "string",
   "severityNumber?": "number",
   "severityText?": "string",
-  "body?": {
-    "stringValue?": "string",
-    "intValue?": "string",
-    "doubleValue?": "number",
-    "boolValue?": "boolean",
-    "bytesValue?": "string",
-  },
-  "attributes?": SpanAttribute.array(),
+  "body?": AnyValue,
+  "attributes?": KeyValue.array(),
   "droppedAttributesCount?": "number",
   "flags?": "number",
   "traceId?": "string",
@@ -242,7 +184,7 @@ const ScopeLogRecords = type({
   "scope?": {
     name: "string",
     "version?": "string",
-    "attributes?": SpanAttribute.array(),
+    "attributes?": KeyValue.array(),
   },
   logRecords: LogRecord.array(),
   "schemaUrl?": "string",
@@ -251,7 +193,7 @@ const ScopeLogRecords = type({
 // Resource logs
 const ResourceLogs = type({
   "resource?": {
-    attributes: SpanAttribute.array(),
+    attributes: KeyValue.array(),
     "droppedAttributesCount?": "number",
   },
   scopeLogs: ScopeLogRecords.array(),
