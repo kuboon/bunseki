@@ -1,6 +1,6 @@
 import { SpanKind } from "../schemas.ts";
 import { Trace, TraceOpts } from "./trace.ts";
-import { sendPVMetric } from "./metrics.ts";
+import { sendPVMetric, sendRedirectMetric } from "./metrics.ts";
 import type { AppType } from "../collector/mod.ts";
 
 import { hc } from "@hono/hono/client";
@@ -47,5 +47,9 @@ export class OtlpExporter {
     span.addAttribute("http.method", req.method);
     span.addAttribute("url.full", req.url);
     return span;
+  }
+
+  onRedirect(oldPath: string, newPath: string, route?: string, statusCode: number = 301) {
+    sendRedirectMetric(this, oldPath, newPath, route, statusCode);
   }
 }
