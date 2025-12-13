@@ -7,7 +7,7 @@ interface LayoutProps {
 
 export default function Layout({ title, children }: LayoutProps) {
   return (
-    <html lang="en" data-theme="dark">
+    <html lang="jp">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

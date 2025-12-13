@@ -37,7 +37,7 @@ for (const [serviceName, dashboard] of dashboardData.serviceDashboards) {
 
 // Generate service pages dynamically
 export const servicePages = services.map((service) => ({
-  url: `/service/${service.name}/`,
+  url: `/dashboard/${service.name}/`,
   title: `${service.name} - Dashboard`,
   serviceName: service.name,
 }));
@@ -54,7 +54,7 @@ export const errorPages: Array<{
 for (const [serviceName, dashboard] of dashboardData.serviceDashboards) {
   for (const error of dashboard.recentErrors) {
     errorPages.push({
-      url: `/error/${serviceName}/${error.errorHash}/`,
+      url: `/dashboard/${serviceName}/error/${error.errorHash}/`,
       title: `${error.type} - ${serviceName}`,
       serviceName,
       errorHash: error.errorHash,

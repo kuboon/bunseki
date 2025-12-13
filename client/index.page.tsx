@@ -20,8 +20,7 @@ export default function Index({ services }: IndexProps) {
               dashboards here.
             </p>
             <div class="mockup-code">
-              <pre data-prefix="$"><code>npm install honotlp</code></pre>
-              <pre data-prefix=">"><code>import {"{"} OtlpExporter {"}"} from 'honotlp';</code></pre>
+              <pre data-prefix=">"><code>import {"{"} OtlpExporter {"}"} from 'https://bunseki.kbn.one/client.js';</code></pre>
             </div>
           </div>
         </div>
@@ -63,7 +62,7 @@ export default function Index({ services }: IndexProps) {
                 </div>
                 <div class="card-actions justify-end mt-4">
                   <a
-                    href={`/service/${service.name}/`}
+                    href={`/dashboard/${service.name}/`}
                     class="btn btn-primary btn-sm"
                   >
                     View Dashboard →

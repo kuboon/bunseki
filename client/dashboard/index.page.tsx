@@ -166,7 +166,7 @@ function ServiceDashboardComponent(
                         </td>
                         <td>
                           <a
-                            href={`/error/${serviceName}/${error.errorHash}/`}
+                            href={`/dashboard/${serviceName}/error/${error.errorHash}/`}
                             class="btn btn-ghost btn-xs"
                           >
                             Details →
