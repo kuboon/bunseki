@@ -54,7 +54,8 @@ for (let day = daysBack - 1; day >= 0; day--) {
 
   for (let i = 0; i < pvCount; i++) {
     // Random time during the day
-    const timestamp = date.getTime() + Math.floor(Math.random() * 24 * 60 * 60 * 1000);
+    const timestamp = date.getTime() +
+      Math.floor(Math.random() * 24 * 60 * 60 * 1000);
     _setNow(() => timestamp);
 
     // Random path
@@ -65,7 +66,8 @@ for (let day = daysBack - 1; day >= 0; day--) {
 
     // 10% chance of error
     if (Math.random() < 0.1) {
-      const errorType = errorTypes[Math.floor(Math.random() * errorTypes.length)];
+      const errorType =
+        errorTypes[Math.floor(Math.random() * errorTypes.length)];
       const error = new Error(errorType.message);
       error.name = errorType.name;
 
@@ -86,18 +88,25 @@ for (let day = daysBack - 1; day >= 0; day--) {
   const requestCount = Math.floor(Math.random() * 20) + 5;
 
   for (let i = 0; i < requestCount; i++) {
-    const timestamp = date.getTime() + Math.floor(Math.random() * 24 * 60 * 60 * 1000);
+    const timestamp = date.getTime() +
+      Math.floor(Math.random() * 24 * 60 * 60 * 1000);
     _setNow(() => timestamp);
 
     const methods = ["GET", "POST", "PUT", "DELETE"];
     const method = methods[Math.floor(Math.random() * methods.length)];
-    const apiPaths = ["/api/users", "/api/products", "/api/orders", "/api/auth"];
+    const apiPaths = [
+      "/api/users",
+      "/api/products",
+      "/api/orders",
+      "/api/auth",
+    ];
     const path = apiPaths[Math.floor(Math.random() * apiPaths.length)];
 
     const req = new Request(`http://example.com${path}`, {
       method,
       headers: {
-        "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+        "traceparent":
+          "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
       },
     });
 
@@ -105,7 +114,8 @@ for (let day = daysBack - 1; day >= 0; day--) {
 
     // 5% chance of error
     if (Math.random() < 0.05) {
-      const errorType = errorTypes[Math.floor(Math.random() * errorTypes.length)];
+      const errorType =
+        errorTypes[Math.floor(Math.random() * errorTypes.length)];
       const error = new Error(errorType.message);
       error.name = errorType.name;
 

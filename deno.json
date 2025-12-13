@@ -28,5 +28,9 @@
       "read": ["./otlp", "./client/_site", ".db"],
       "write": ["./client/_site", ".db"]
     }
+  },
+  "deploy": {
+    "org": "kuboon-tokyo",
+    "app": "bunseki"
   }
 }
