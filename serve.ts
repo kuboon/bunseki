@@ -1,4 +1,5 @@
 import otlpRouter from "./otlp/collector/mod.ts";
+import dashboardApiRouter from "./api/dashboard.ts";
 import { ALLOWED_DOMAINS } from "./types.ts";
 import { initStorage } from "./storage/mod.ts";
 
@@ -41,7 +42,7 @@ const corsMiddleware = cors({
 
     return "";
   },
-  allowMethods: ["POST", "OPTIONS"],
+  allowMethods: ["GET", "POST", "OPTIONS"],
   allowHeaders: ["Content-Type"],
   exposeHeaders: ["Content-Length"],
   maxAge: 86400,
@@ -50,8 +51,11 @@ const corsMiddleware = cors({
 
 app.use("/exporter.browser.js", corsMiddleware);
 app.use("/otlp/*", corsMiddleware);
+app.use("/api/*", corsMiddleware);
 // Mount OTLP router
 app.route("/otlp", otlpRouter);
+// Mount Dashboard API router
+app.route("/api/dashboard", dashboardApiRouter);
 
 // Serve static files from Lume build output
 app.get("*", serveStatic({ root: "./client/_site" }));

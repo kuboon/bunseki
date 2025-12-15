@@ -1,5 +1,4 @@
 // Lume data file - provides data to static pages during build
-import type { ErrorRecord } from "../storage/mod.ts";
 import { getDashboardData, initStorage } from "../storage/mod.ts";
 
 // Initialize storage on load
@@ -11,29 +10,6 @@ export const layout = "layout.tsx";
 const dashboardData = await getDashboardData(30);
 
 export const services = dashboardData.services;
-
-// Convert Maps to plain objects/arrays for Lume serialization
-export const serviceDashboards: Record<string, {
-  service: { name: string; firstSeen: number; lastSeen: number };
-  pvData: Array<{ date: string; count: number }>;
-  recentErrors: Array<{
-    errorHash: string;
-    type: string;
-    message: string;
-    count: number;
-    lastSeen: number;
-  }>;
-}> = {};
-
-for (const [serviceName, dashboard] of dashboardData.serviceDashboards) {
-  serviceDashboards[serviceName] = {
-    service: dashboard.service,
-    pvData: Array.from(dashboard.pvData.entries())
-      .map(([date, count]) => ({ date, count }))
-      .sort((a, b) => a.date.localeCompare(b.date)),
-    recentErrors: dashboard.recentErrors,
-  };
-}
 
 // Generate service pages dynamically
 export const servicePages = services.map((service) => ({
@@ -48,7 +24,6 @@ export const errorPages: Array<{
   title: string;
   serviceName: string;
   errorHash: string;
-  error: ErrorRecord;
 }> = [];
 
 for (const [serviceName, dashboard] of dashboardData.serviceDashboards) {
@@ -58,7 +33,6 @@ for (const [serviceName, dashboard] of dashboardData.serviceDashboards) {
       title: `${error.type} - ${serviceName}`,
       serviceName,
       errorHash: error.errorHash,
-      error,
     });
   }
 }
