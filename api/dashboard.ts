@@ -10,16 +10,20 @@ import {
 // Initialize storage
 await initStorage();
 
-// Validation schema for service name parameter
-const serviceNameSchema = type("string>0");
+// Validation schemas
+const serviceNameParamSchema = type({
+  serviceName: "string>0",
+});
 
-// Validation schema for error hash parameter
-const errorHashSchema = type("string>0");
+const errorParamSchema = type({
+  serviceName: "string>0",
+  errorHash: "string>0",
+});
 
 const router = new Hono().basePath("/api/dashboard")
   .get(
     "/:serviceName",
-    sValidator("param", type({ serviceName: serviceNameSchema })),
+    sValidator("param", serviceNameParamSchema),
     async (c) => {
       try {
         const { serviceName } = c.req.valid("param");
@@ -52,10 +56,7 @@ const router = new Hono().basePath("/api/dashboard")
   )
   .get(
     "/:serviceName/error/:errorHash",
-    sValidator("param", type({
-      serviceName: serviceNameSchema,
-      errorHash: errorHashSchema,
-    })),
+    sValidator("param", errorParamSchema),
     async (c) => {
       try {
         const { serviceName, errorHash } = c.req.valid("param");
