@@ -10,9 +10,13 @@
   },
   "imports": {
     "@hono/hono": "jsr:@hono/hono@^4.10.8",
+    "@hono/standard-validator": "jsr:@hono/standard-validator@^0.2.0",
+    "@std/expect": "jsr:@std/expect@^1.0.17",
+    "@std/testing": "jsr:@std/testing@^1.0.16",
     "lume/": "https://cdn.jsdelivr.net/gh/lumeland/lume@3.1.2/",
     "lume/jsx-runtime": "https://cdn.jsdelivr.net/gh/oscarotero/ssx@0.1.13/jsx-runtime.ts",
-    "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.14.2/"
+    "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.14.2/",
+    "arktype": "npm:arktype@^2.1.28"
   },
   "unstable": ["bundle", "fmt-component", "temporal", "kv"],
   "lint": {

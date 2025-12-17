@@ -55,7 +55,7 @@ app.use("/api/*", corsMiddleware);
 // Mount OTLP router
 app.route("/otlp", otlpRouter);
 // Mount Dashboard API router
-app.route("/api/dashboard", dashboardApiRouter);
+app.route("/", dashboardApiRouter);
 
 // Serve static files from Lume build output
 app.get("*", serveStatic({ root: "./client/_site" }));
