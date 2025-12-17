@@ -1,10 +1,10 @@
 # bunseki
 
-Simple OTLP collector on deno deploy &amp; deno KV
+Simple OTLP/HTTP collector on deno deploy &amp; deno KV
+And easy to use OTLP/HTTP exporter.
 
 ## Features
 
-- **Data Retention**: Automatically aggregates data older than 1 month into daily statistics
 - **Deno KV Storage**: All data stored in Deno KV
 - **Domain-based**: Supports multiple domains with separate tracking
 
@@ -26,108 +26,42 @@ This project includes a devcontainer configuration for easy development with Den
 deno task dev
 
 # Production mode
-deno task start
+deno serve -A serve.ts
 ```
 
 The server runs on port 8000 by default (configurable via `PORT` environment variable).
 
-## API Endpoints
+## OTLP Collector Endpoints
 
-### Browser Analytics
+Endpoints are OTEL OTLP/HTTP compatible.
+Endpoint base: `https://your.domain/otlp/`
 
-**Endpoint**: `POST /domains/:domain/browser`
+- `POST /otlp/v1/traces`
+- `POST /otlp/v1/metrics`
+
+## OTLP Exporter
+
+### On browser
+
+```ts
+import { OtlpExporter } from "https://bunseki.kbn.one/exporter.browser.js";
+
+const otlp = new OtlpExporter({ serviceName: "o.kbn.one" });
+let span = otlp.onPageLoad();
+globalThis.addEventListener("error", (ev) => {
+  span.postError(ev.error);
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    span.post();
+  } else {
+    span = span.trace.newSpan({ name: "page-visible" });
+  }
+});
+```
 
 - CORS enabled for browser usage
 - No authentication required
-
-**Request Body**:
-
-```json
-{
-  "url": "https://example.com/page",
-  "referrer": "https://google.com",
-  "screenResolution": "1920x1080",
-  "language": "en-US",
-  "sessionId": "unique-session-id"
-}
-```
-
-### Browser Error Reporting
-
-**Endpoint**: `POST /domains/:domain/browser/error`
-
-- CORS enabled
-- No authentication required
-
-**Request Body**:
-
-```json
-{
-  "message": "Error message",
-  "stack": "Error stack trace",
-  "url": "https://example.com/page"
-}
-```
-
-### Server Analytics
-
-**Endpoint**: `POST /domains/:domain/server`
-
-- Requires HMAC-SHA256 signature in `x-signature` header
-- Signature should be computed over the request body
-
-**Request Body**:
-
-```json
-{
-  "endpoint": "/api/users",
-  "method": "GET",
-  "statusCode": 200,
-  "duration": 123,
-  "userAgent": "...",
-  "ip": "1.2.3.4"
-}
-```
-
-### Server Error Reporting
-
-**Endpoint**: `POST /domains/:domain/server/error`
-
-- Requires HMAC-SHA256 signature in `x-signature` header
-
-**Request Body**:
-
-```json
-{
-  "message": "Error message",
-  "stack": "Error stack trace",
-  "url": "/api/endpoint",
-  "userAgent": "..."
-}
-```
-
-## Authentication
-
-Server endpoints require HMAC-SHA256 signatures. To get your signing key:
-
-```bash
-deno task show-key
-```
-
-This will display the signing keys for all configured domains. Keys are automatically generated on first run and stored in Deno KV.
-
-## Data Retention
-
-Run the cleanup task to aggregate old data:
-
-```bash
-deno task cleanup
-```
-
-This should be run periodically (e.g., via cron job) to:
-
-- Aggregate raw events older than 1 month into daily statistics
-- Delete old raw event data to save storage
 
 ## License
 
