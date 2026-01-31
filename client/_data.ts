@@ -12,10 +12,10 @@ const dashboardData = await getDashboardData(30);
 export const services = dashboardData.services;
 
 // Generate service pages dynamically
-export const servicePages = services.map((service) => ({
-  url: `/dashboard/${service.name}/`,
-  title: `${service.name} - Dashboard`,
-  serviceName: service.name,
+export const servicePages = ["o.kbn.one", "dd2030.org"].map((service) => ({
+  url: `/dashboard/${service}/`,
+  title: `${service} - Dashboard`,
+  serviceName: service,
 }));
 
 // Generate error pages dynamically
