@@ -28,9 +28,7 @@ export default function* (data: PageData) {
     yield {
       url: pageData.url,
       title: pageData.title,
-      content: (
-        <ServiceDashboardPage serviceName={pageData.serviceName} />
-      ),
+      content: <ServiceDashboardPage serviceName={pageData.serviceName} />,
     };
   }
 }
@@ -200,4 +198,3 @@ function ServiceDashboardPage({ serviceName }: ServiceDashboardPageProps) {
     </div>
   );
 }
-

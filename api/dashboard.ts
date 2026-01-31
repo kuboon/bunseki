@@ -1,11 +1,7 @@
 import { type } from "arktype";
 import { Hono } from "@hono/hono";
 import { sValidator } from "@hono/standard-validator";
-import {
-  getDashboardData,
-  getError,
-  initStorage,
-} from "../storage/mod.ts";
+import { getDashboardData, getError, initStorage } from "../storage/mod.ts";
 
 // Initialize storage
 await initStorage();
