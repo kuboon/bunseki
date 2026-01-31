@@ -27,7 +27,7 @@ export class OtlpExporter {
   }
 
   /// for Client
-  onPageLoad(location = new URL(globalThis.location.href)) {
+  async onPageLoad(location = new URL(globalThis.location.href)) {
     const spanKind = SpanKind.CLIENT;
     const trace = this.newTrace({ spanKind });
     const span = trace.newSpan({ name: "page_load" });
@@ -36,7 +36,7 @@ export class OtlpExporter {
     span.addAttribute("http.method", "GET");
 
     // Send PV count metric
-    sendPVMetric(this, location.pathname);
+    await sendPVMetric(this, location.pathname);
 
     return span;
   }

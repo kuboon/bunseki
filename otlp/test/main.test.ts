@@ -7,23 +7,23 @@ import { testClient } from "@hono/hono/testing";
 import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 
-await initStorage(":memory:");
 const exporter = new OtlpExporter({
   serviceName: "test-service",
   endpoint: "http://localhost:4318",
 });
 exporter.client = testClient(collector);
+await initStorage(":memory:");
 
 describe("onPageLoad", () => {
-  it("generates page_load span", () => {
-    const span = exporter.onPageLoad(new URL("http://localhost/page"));
-    span.postError(new Error("Test error"));
+  it("generates page_load span", async () => {
+    const span = await exporter.onPageLoad(new URL("http://localhost/page"));
+    await span.postError(new Error("Test error"));
     expect(span.name).toBe("page_load");
-    console.log(JSON.stringify(span.trace, null, 2));
+    // console.log(JSON.stringify(span.trace, null, 2));
   });
 });
 describe("onRequest", () => {
-  it("generates http_request span", () => {
+  it("generates http_request span", async () => {
     const req = new Request("http://localhost/test", {
       method: "GET",
       headers: {
@@ -31,8 +31,9 @@ describe("onRequest", () => {
       },
     });
     const span = exporter.onRequest(req);
-    span.postError(new Error("Test error"));
+    const res = await span.postError(new Error("Test error"));
+    console.log("Response:", await res.json());
     expect(span.name).toBe("http_request");
-    console.log(JSON.stringify(span.trace, null, 2));
+    // console.log(JSON.stringify(span.trace, null, 2));
   });
 });

@@ -2,7 +2,7 @@ import { toKeyValue, toUnixNano } from "../protojson.ts";
 import { metricsRequestSchema } from "../schemas.ts";
 import { dateNow, ExporterConfig } from "./utils.ts";
 
-export function sendPVMetric(exporter: ExporterConfig, path: string) {
+export async function sendPVMetric(exporter: ExporterConfig, path: string) {
   const now = dateNow();
   const timeUnixNano = toUnixNano(now);
 
@@ -48,7 +48,7 @@ export function sendPVMetric(exporter: ExporterConfig, path: string) {
   } satisfies typeof metricsRequestSchema.infer;
 
   // Send metric asynchronously (fire and forget)
-  exporter.client.v1.metrics.$post({ json: metric }).catch((err) => {
+  await exporter.client.v1.metrics.$post({ json: metric }).catch((err) => {
     console.error("Failed to send PV metric:", err);
   });
 }
