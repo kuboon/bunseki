@@ -56,7 +56,7 @@ app.use("/api/*", corsMiddleware);
 
 // Mount routers
 app.route("/otlp", otlpRouter);
-app.route("/api/dashboard", dashboardApiRouter);
+app.route("/", dashboardApiRouter);
 app.route("/api/kvadmin", kvAdminRouter);
 
 // Serve static files from Lume build output
