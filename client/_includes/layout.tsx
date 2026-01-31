@@ -2,7 +2,7 @@ export const title = "Bunseki - Telemetry Dashboard";
 
 interface LayoutProps {
   title: string;
-  children: React.ReactNode;
+  children: unknown;
 }
 
 export default function Layout({ title, children }: LayoutProps) {

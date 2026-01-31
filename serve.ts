@@ -1,5 +1,6 @@
-import otlpRouter from "./otlp/collector/mod.ts";
+import otlpRouter from "@kuboon/otlp/collector";
 import dashboardApiRouter from "./api/dashboard.ts";
+import kvAdminRouter from "@kuboon/kvAdmin";
 import { ALLOWED_DOMAINS } from "./types.ts";
 import { initStorage } from "./storage/mod.ts";
 
@@ -52,10 +53,11 @@ const corsMiddleware = cors({
 app.use("/exporter.browser.js", corsMiddleware);
 app.use("/otlp/*", corsMiddleware);
 app.use("/api/*", corsMiddleware);
-// Mount OTLP router
+
+// Mount routers
 app.route("/otlp", otlpRouter);
-// Mount Dashboard API router
-app.route("/", dashboardApiRouter);
+app.route("/api/dashboard", dashboardApiRouter);
+app.route("/api/kvadmin", kvAdminRouter);
 
 // Serve static files from Lume build output
 app.get("*", serveStatic({ root: "./client/_site" }));

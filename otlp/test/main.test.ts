@@ -1,12 +1,17 @@
 // index.test.ts
-import { testClient } from "@hono/hono/testing";
 import collector from "../collector/mod.ts";
 import { OtlpExporter } from "../exporter/mod.ts";
+import { initStorage } from "../../storage/mod.ts";
 
+import { testClient } from "@hono/hono/testing";
 import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 
-const exporter = new OtlpExporter("test-service", "http://localhost:4318");
+await initStorage(":memory:");
+const exporter = new OtlpExporter({
+  serviceName: "test-service",
+  endpoint: "http://localhost:4318",
+});
 exporter.client = testClient(collector);
 
 describe("onPageLoad", () => {

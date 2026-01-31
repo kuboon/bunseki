@@ -16,7 +16,10 @@ console.log(`Generating dummy data for service: ${serviceName}`);
 console.log(`Days back: ${daysBack}`);
 
 // Create exporter with test client
-const exporter = new OtlpExporter(serviceName, "http://localhost:4318");
+const exporter = new OtlpExporter({
+  serviceName,
+  endpoint: "http://localhost:4318",
+});
 exporter.client = testClient(collector);
 
 // Common paths for page views

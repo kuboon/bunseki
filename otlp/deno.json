@@ -1,5 +1,8 @@
 {
-  "name": "@bunseki/otlp",
+  "name": "@kuboon/otlp",
   "version": "0.1.0",
-  "exports": "./mod.ts"
+  "exports": {
+    "./collector": "./collector/mod.ts",
+    "./exporter": "./exporter/mod.ts"
+  }
 }

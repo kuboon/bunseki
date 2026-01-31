@@ -2,7 +2,7 @@
 
 // Get domain from URL path
 function getDomainFromPath() {
-  const path = window.location.pathname;
+  const path = location.pathname;
   const match = path.match(/\/domains\/([^\/]+)\/view/);
   return match ? match[1] : null;
 }

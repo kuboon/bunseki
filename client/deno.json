@@ -1,4 +1,18 @@
 {
+  "tasks": {
+    "lume": {
+      "description": "Run Lume command",
+      "command": "deno run -P=lume lume/cli.ts"
+    },
+    "build": {
+      "description": "Build the site for production",
+      "command": "deno task lume"
+    },
+    "serve": {
+      "description": "Run and serve the site for development",
+      "command": "deno task lume -s"
+    }
+  },
   "imports": {
     "@std/path": "jsr:@std/path@^1.1.4",
     "lume/": "https://cdn.jsdelivr.net/gh/lumeland/lume@3.1.4/",
@@ -27,20 +41,6 @@
       "run": true,
       "ffi": true,
       "sys": true
-    }
-  },
-  "tasks": {
-    "lume": {
-      "description": "Run Lume command",
-      "command": "deno run -P=lume --env lume/cli.ts"
-    },
-    "build": {
-      "description": "Build the site for production",
-      "command": "deno task lume"
-    },
-    "serve": {
-      "description": "Run and serve the site for development",
-      "command": "deno task lume -s"
     }
   },
   "compilerOptions": {

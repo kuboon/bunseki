@@ -5,9 +5,9 @@ import type { SpanType } from "../otlp/schemas.ts";
 // Initialize Deno KV
 let kv: Deno.Kv;
 
-export async function initStorage() {
+export async function initStorage(path?: string) {
   if (!kv) {
-    kv = await Deno.openKv();
+    kv = await Deno.openKv(path);
   }
   return kv;
 }

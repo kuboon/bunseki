@@ -1,10 +1,11 @@
 {
   "workspace": [
     "./client",
-    "./otlp"
+    "./otlp",
+    "./kvAdmin"
   ],
   "tasks": {
-    "build": "deno task --tunnel --cwd=client build",
+    "build": "deno task --cwd=client build",
     "dev": "deno serve -P=serve --watch serve.ts",
     "serve": "deno serve -P=serve serve.ts",
     "generate-dummy": "deno run -P=serve --env otlp/test/generateDummyData.ts"
