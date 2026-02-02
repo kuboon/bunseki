@@ -1,21 +1,5 @@
 export const layout = "layout.tsx";
 
-interface ServiceDashboard {
-  service: {
-    name: string;
-    firstSeen: number;
-    lastSeen: number;
-  };
-  pvData: Array<{ date: string; count: number }>;
-  recentErrors: Array<{
-    errorHash: string;
-    type: string;
-    message: string;
-    count: number;
-    lastSeen: number;
-  }>;
-}
-
 interface PageData {
   servicePages: Array<{ url: string; title: string; serviceName: string }>;
 }
@@ -163,7 +147,7 @@ function ServiceDashboardPage({ serviceName }: ServiceDashboardPageProps) {
                       <td><div class="badge badge-neutral">\${error.count}</div></td>
                       <td class="text-sm opacity-70">\${new Date(error.lastSeen).toLocaleString()}</td>
                       <td>
-                        <a href="/dashboard/\${serviceName}/error/\${error.errorHash}/" class="btn btn-ghost btn-xs">
+                        <a href="/dashboard/\${serviceName}/error/\${error.errorHash}" class="btn btn-ghost btn-xs">
                           Details →
                         </a>
                       </td>

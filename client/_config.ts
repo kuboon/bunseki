@@ -20,5 +20,6 @@ site.use(pagefind());
 site.add("exporter.browser.ts");
 site.add("exporter.server.ts");
 site.add("styles");
+site.add("dashboard/error.ts");
 
 export default site;
