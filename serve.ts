@@ -1,6 +1,6 @@
 import otlpRouter from "@kuboon/otlp/collector";
 import dashboardApiRouter from "./api/dashboard.ts";
-import kvAdminRouter from "@kuboon/kvAdmin";
+// import kvAdminRouter from "@kuboon/kvAdmin";
 import { ALLOWED_DOMAINS } from "./types.ts";
 import { initStorage } from "./storage/mod.ts";
 
@@ -57,7 +57,7 @@ app.use("/api/*", corsMiddleware);
 // Mount routers
 app.route("/otlp", otlpRouter);
 app.route("/", dashboardApiRouter);
-app.route("/api/kvadmin", kvAdminRouter);
+// app.route("/api/kvadmin", kvAdminRouter);
 
 // Serve specific error pages for dashboard
 app.get("/dashboard/:serviceName/error/:errorHash", async (c) => {
@@ -76,5 +76,5 @@ app.get("/dashboard/:serviceName/error/:errorHash", async (c) => {
 app.get("*", serveStatic({ root: "./client/_site" }));
 
 export default {
-  fetch: app.fetch,
+  fetch: app.fetch.bind(app),
 };
