@@ -16,30 +16,30 @@ This guide provides a comprehensive overview of the Remix Component API, its run
 To start using Remix Component, create a root and render your top-level component:
 
 ```tsx
-import { createRoot } from '@remix-run/component'
-import type { Handle } from '@remix-run/component'
+import { createRoot } from "@remix-run/component";
+import type { Handle } from "@remix-run/component";
 
 function App(handle: Handle) {
   return () => (
     <div>
       <h1>Hello, World!</h1>
     </div>
-  )
+  );
 }
 
 // Create a root attached to a DOM element
-let container = document.getElementById('app')!
-let root = createRoot(container)
+let container = document.getElementById("app")!;
+let root = createRoot(container);
 
 // Render your app
-root.render(<App />)
+root.render(<App />);
 ```
 
 The `createRoot` function takes a DOM element (or `document.body`) and returns a root object with a `render` method. You can call `render` multiple times to update the app:
 
 ```tsx
 function App(handle: Handle) {
-  let count = 0
+  let count = 0;
 
   return () => (
     <div>
@@ -47,19 +47,19 @@ function App(handle: Handle) {
       <button
         on={{
           click() {
-            count++
-            handle.update()
+            count++;
+            handle.update();
           },
         }}
       >
         Increment
       </button>
     </div>
-  )
+  );
 }
 
-let root = createRoot(document.body)
-root.render(<App />)
+let root = createRoot(document.body);
+root.render(<App />);
 
 // Later, you can update the app by calling render again
 // root.render(<App />)
@@ -74,16 +74,16 @@ The root object provides several methods:
 - **`remove()`** - Removes the component tree and cleans up
 
 ```tsx
-let root = createRoot(document.body)
+let root = createRoot(document.body);
 
 // Render initial app
-root.render(<App />)
+root.render(<App />);
 
 // Flush any pending updates synchronously
-root.flush()
+root.flush();
 
 // Later, remove the app
-root.remove()
+root.remove();
 ```
 
 ## Component Factory and Runtime Behavior
@@ -98,12 +98,12 @@ All components follow a consistent two-phase structure:
 ```tsx
 function MyComponent(handle: Handle, setup: SetupType) {
   // Setup phase: runs once
-  let state = initializeState(setup)
+  let state = initializeState(setup);
 
   // Return render function: runs on every update
   return (props: Props) => {
-    return <div>{/* render content */}</div>
-  }
+    return <div>{/* render content */}</div>;
+  };
 }
 ```
 
@@ -138,7 +138,7 @@ The `setup` prop is special - it's only available in the setup phase and is auto
 ```tsx
 function Counter(handle: Handle, setup: number) {
   // setup prop (e.g., initialCount) only available here
-  let count = setup
+  let count = setup;
 
   return (props: { label: string }) => {
     // props only receives { label } - setup is excluded
@@ -146,12 +146,12 @@ function Counter(handle: Handle, setup: number) {
       <div>
         {props.label}: {count}
       </div>
-    )
-  }
+    );
+  };
 }
 
 // Usage
-let element = <Counter setup={10} label="Count" />
+let element = <Counter setup={10} label="Count" />;
 ```
 
 ## Handle API
@@ -164,20 +164,20 @@ Schedules a component update. Optionally accepts a task to run after the update 
 
 ```tsx
 function Counter(handle: Handle) {
-  let count = 0
+  let count = 0;
 
   return () => (
     <button
       on={{
         click() {
-          count++
-          handle.update()
+          count++;
+          handle.update();
         },
       }}
     >
       Count: {count}
     </button>
-  )
+  );
 }
 ```
 
@@ -185,25 +185,25 @@ With a task:
 
 ```tsx
 function Player(handle: Handle) {
-  let isPlaying = false
-  let stopButton: HTMLButtonElement
+  let isPlaying = false;
+  let stopButton: HTMLButtonElement;
 
   return () => (
     <button
       disabled={isPlaying}
       on={{
         click() {
-          isPlaying = true
+          isPlaying = true;
           handle.update(() => {
             // Task runs after update completes
-            stopButton.focus()
-          })
+            stopButton.focus();
+          });
         },
       }}
     >
       Play
     </button>
-  )
+  );
 }
 ```
 
@@ -218,8 +218,8 @@ Schedules a task to run after the next update. The task receives an `AbortSignal
 
 ```tsx
 function Form(handle: Handle) {
-  let showDetails = false
-  let detailsSection: HTMLElement
+  let showDetails = false;
+  let detailsSection: HTMLElement;
 
   return () => (
     <form>
@@ -228,22 +228,24 @@ function Form(handle: Handle) {
         checked={showDetails}
         on={{
           change(event) {
-            showDetails = event.currentTarget.checked
-            handle.update()
+            showDetails = event.currentTarget.checked;
+            handle.update();
             if (showDetails) {
               // Queue DOM operation after the new section renders
               handle.queueTask(() => {
-                detailsSection.scrollIntoView({ behavior: 'smooth' })
-              })
+                detailsSection.scrollIntoView({ behavior: "smooth" });
+              });
             }
           },
         }}
       />
       {showDetails && (
-        <section connect={(node) => (detailsSection = node)}>Details content</section>
+        <section connect={(node) => (detailsSection = node)}>
+          Details content
+        </section>
       )}
     </form>
-  )
+  );
 }
 ```
 
@@ -256,27 +258,27 @@ When you need to perform async work (like data fetching) that should respond to 
 ```tsx
 // ❌ Avoid: Creating state just to react to it in queueTask
 function BadExample(handle: Handle) {
-  let shouldLoad = false // Unnecessary state
+  let shouldLoad = false; // Unnecessary state
 
   return () => (
     <div>
       <button
         on={{
           click() {
-            shouldLoad = true // Setting state just to trigger queueTask
-            handle.update()
+            shouldLoad = true; // Setting state just to trigger queueTask
+            handle.update();
             handle.queueTask(() => {
               if (shouldLoad) {
                 // Do work
               }
-            })
+            });
           },
         }}
       >
         Load
       </button>
     </div>
-  )
+  );
 }
 
 // ✅ Prefer: Do the work directly in the event handler or queueTask
@@ -288,14 +290,14 @@ function GoodExample(handle: Handle) {
           click() {
             handle.queueTask(() => {
               // Do work directly - no intermediate state needed
-            })
+            });
           },
         }}
       >
         Load
       </button>
     </div>
-  )
+  );
 }
 ```
 
@@ -306,41 +308,41 @@ The task's signal is aborted when the component re-renders. If you call `handle.
 ```tsx
 // ❌ Avoid: Calling handle.update() before async work in the same task
 function BadAsyncExample(handle: Handle) {
-  let data: string[] = []
-  let loading = false
+  let data: string[] = [];
+  let loading = false;
 
   handle.queueTask(async (signal) => {
-    loading = true
-    handle.update() // This triggers a re-render, which aborts signal!
+    loading = true;
+    handle.update(); // This triggers a re-render, which aborts signal!
 
-    let response = await fetch('/api/data', { signal }) // AbortError: signal is aborted
+    let response = await fetch("/api/data", { signal }); // AbortError: signal is aborted
 
-    data = await response.json()
-    loading = false
-    handle.update()
-  })
+    data = await response.json();
+    loading = false;
+    handle.update();
+  });
 
-  return () => <div>{loading ? 'Loading...' : data.join(', ')}</div>
+  return () => <div>{loading ? "Loading..." : data.join(", ")}</div>;
 }
 
 // ✅ Prefer: Move async work into a new task via handle.update(task)
 function GoodAsyncExample(handle: Handle) {
-  let data: string[] = []
-  let loading = false
+  let data: string[] = [];
+  let loading = false;
 
   handle.queueTask(() => {
-    loading = true
+    loading = true;
     handle.update(async (signal) => {
       // This task gets a fresh signal that won't be aborted by the update above
-      let response = await fetch('/api/data', { signal })
+      let response = await fetch("/api/data", { signal });
 
-      data = await response.json()
-      loading = false
-      handle.update()
-    })
-  })
+      data = await response.json();
+      loading = false;
+      handle.update();
+    });
+  });
 
-  return () => <div>{loading ? 'Loading...' : data.join(', ')}</div>
+  return () => <div>{loading ? "Loading..." : data.join(", ")}</div>;
 }
 ```
 
@@ -368,13 +370,13 @@ An `AbortSignal` that's aborted when the component is disconnected. Useful for c
 function Clock(handle: Handle) {
   let interval = setInterval(() => {
     if (handle.signal.aborted) {
-      clearInterval(interval)
-      return
+      clearInterval(interval);
+      return;
     }
-    handle.update()
-  }, 1000)
+    handle.update();
+  }, 1000);
 
-  return () => <span>{new Date().toString()}</span>
+  return () => <span>{new Date().toString()}</span>;
 }
 ```
 
@@ -382,10 +384,10 @@ Or using event listeners:
 
 ```tsx
 function Clock(handle: Handle) {
-  let interval = setInterval(handle.update, 1000)
-  handle.signal.addEventListener('abort', () => clearInterval(interval))
+  let interval = setInterval(handle.update, 1000);
+  handle.signal.addEventListener("abort", () => clearInterval(interval));
 
-  return () => <span>{new Date().toString()}</span>
+  return () => <span>{new Date().toString()}</span>;
 }
 ```
 
@@ -395,16 +397,16 @@ Listen to an `EventTarget` with automatic cleanup when the component disconnects
 
 ```tsx
 function KeyboardTracker(handle: Handle) {
-  let keys: string[] = []
+  let keys: string[] = [];
 
   handle.on(document, {
     keydown(event) {
-      keys.push(event.key)
-      handle.update()
+      keys.push(event.key);
+      handle.update();
     },
-  })
+  });
 
-  return () => <div>Keys: {keys.join(', ')}</div>
+  return () => <div>Keys: {keys.join(", ")}</div>;
 }
 ```
 
@@ -419,7 +421,7 @@ function LabeledInput(handle: Handle) {
       <label htmlFor={handle.id}>Name</label>
       <input id={handle.id} type="text" />
     </div>
-  )
+  );
 }
 ```
 
@@ -431,19 +433,23 @@ Context API for ancestor/descendant communication. Use `handle.context.set()` to
 
 ```tsx
 function App(handle: Handle<{ theme: string }>) {
-  handle.context.set({ theme: 'dark' })
+  handle.context.set({ theme: "dark" });
 
   return () => (
     <div>
       <Header />
       <Content />
     </div>
-  )
+  );
 }
 
 function Header(handle: Handle) {
-  let { theme } = handle.context.get(App)
-  return () => <header css={{ backgroundColor: theme === 'dark' ? '#000' : '#fff' }}>Header</header>
+  let { theme } = handle.context.get(App);
+  return () => (
+    <header css={{ backgroundColor: theme === "dark" ? "#000" : "#fff" }}>
+      Header
+    </header>
+  );
 }
 ```
 
@@ -455,10 +461,10 @@ The simplest component just returns JSX:
 
 ```tsx
 function Greeting() {
-  return (props: { name: string }) => <div>Hello, {props.name}!</div>
+  return (props: { name: string }) => <div>Hello, {props.name}!</div>;
 }
 
-let el = <Greeting name="World" />
+let el = <Greeting name="World" />;
 ```
 
 ### Prop Passing
@@ -467,7 +473,7 @@ Props flow from parent to child through JSX attributes:
 
 ```tsx
 function Parent() {
-  return () => <Child message="Hello from parent" count={42} />
+  return () => <Child message="Hello from parent" count={42} />;
 }
 
 function Child() {
@@ -476,7 +482,7 @@ function Child() {
       <p>{props.message}</p>
       <p>Count: {props.count}</p>
     </div>
-  )
+  );
 }
 ```
 
@@ -486,7 +492,7 @@ State is managed with plain JavaScript variables. Call `handle.update()` to trig
 
 ```tsx
 function Counter(handle: Handle) {
-  let count = 0
+  let count = 0;
 
   return () => (
     <div>
@@ -494,15 +500,15 @@ function Counter(handle: Handle) {
       <button
         on={{
           click() {
-            count++
-            handle.update()
+            count++;
+            handle.update();
           },
         }}
       >
         Increment
       </button>
     </div>
-  )
+  );
 }
 ```
 
@@ -517,36 +523,32 @@ Only store state that's needed for rendering. Derive computed values instead of 
 ```tsx
 // ❌ Avoid: Storing computed values
 function TodoList(handle: Handle) {
-  let todos: string[] = []
-  let completedCount = 0 // Unnecessary state
+  let todos: string[] = [];
+  let completedCount = 0; // Unnecessary state
 
   return () => (
     <div>
-      {todos.map((todo, i) => (
-        <div key={i}>{todo}</div>
-      ))}
+      {todos.map((todo, i) => <div key={i}>{todo}</div>)}
       <div>Completed: {completedCount}</div>
     </div>
-  )
+  );
 }
 
 // ✅ Prefer: Derive computed values in render
 function TodoList(handle: Handle) {
-  let todos: Array<{ text: string; completed: boolean }> = []
+  let todos: Array<{ text: string; completed: boolean }> = [];
 
   return () => {
     // Derive computed value in render
-    let completedCount = todos.filter((t) => t.completed).length
+    let completedCount = todos.filter((t) => t.completed).length;
 
     return (
       <div>
-        {todos.map((todo, i) => (
-          <div key={i}>{todo.text}</div>
-        ))}
+        {todos.map((todo, i) => <div key={i}>{todo.text}</div>)}
         <div>Completed: {completedCount}</div>
       </div>
-    )
-  }
+    );
+  };
 }
 ```
 
@@ -555,15 +557,15 @@ function TodoList(handle: Handle) {
 ```tsx
 // ❌ Avoid: Storing input value when you only need it on submit
 function SearchForm(handle: Handle) {
-  let query = '' // Unnecessary state
+  let query = ""; // Unnecessary state
 
   return () => (
     <form
       on={{
         submit(event) {
-          event.preventDefault()
-          let formData = new FormData(event.currentTarget)
-          let query = formData.get('query') as string
+          event.preventDefault();
+          let formData = new FormData(event.currentTarget);
+          let query = formData.get("query") as string;
           // Use query for search
         },
       }}
@@ -571,7 +573,7 @@ function SearchForm(handle: Handle) {
       <input name="query" />
       <button type="submit">Search</button>
     </form>
-  )
+  );
 }
 
 // ✅ Prefer: Read input value directly from the form
@@ -580,9 +582,9 @@ function SearchForm(handle: Handle) {
     <form
       on={{
         submit(event) {
-          event.preventDefault()
-          let formData = new FormData(event.currentTarget)
-          let query = formData.get('query') as string
+          event.preventDefault();
+          let formData = new FormData(event.currentTarget);
+          let query = formData.get("query") as string;
           // Use query for search - no component state needed
         },
       }}
@@ -590,7 +592,7 @@ function SearchForm(handle: Handle) {
       <input name="query" />
       <button type="submit">Search</button>
     </form>
-  )
+  );
 }
 ```
 
@@ -603,26 +605,26 @@ Do as much work as possible in event handlers with minimal component state. Use 
 ```tsx
 // ❌ Avoid: Storing transient state in component
 function FormValidator(handle: Handle) {
-  let validationError: string | null = null // Only needed during validation
+  let validationError: string | null = null; // Only needed during validation
 
   return () => (
     <form
       on={{
         submit(event) {
-          event.preventDefault()
-          let formData = new FormData(event.currentTarget)
-          let email = formData.get('email') as string
+          event.preventDefault();
+          let formData = new FormData(event.currentTarget);
+          let email = formData.get("email") as string;
 
           // Validation logic
-          if (!email.includes('@')) {
-            validationError = 'Invalid email'
-            handle.update()
-            return
+          if (!email.includes("@")) {
+            validationError = "Invalid email";
+            handle.update();
+            return;
           }
 
           // Submit form
-          validationError = null
-          handle.update()
+          validationError = null;
+          handle.update();
         },
       }}
     >
@@ -630,32 +632,32 @@ function FormValidator(handle: Handle) {
       <input name="email" />
       <button type="submit">Submit</button>
     </form>
-  )
+  );
 }
 
 // ✅ Prefer: Keep transient state in event handler scope
 function FormValidator(handle: Handle) {
-  let validationError: string | null = null // Only stored if needed for rendering
+  let validationError: string | null = null; // Only stored if needed for rendering
 
   return () => (
     <form
       on={{
         submit(event) {
-          event.preventDefault()
-          let formData = new FormData(event.currentTarget)
-          let email = formData.get('email') as string
+          event.preventDefault();
+          let formData = new FormData(event.currentTarget);
+          let email = formData.get("email") as string;
 
           // Validation logic - keep transient state in handler scope
-          if (!email.includes('@')) {
-            validationError = 'Invalid email' // Only store if rendering needs it
-            handle.update()
-            return
+          if (!email.includes("@")) {
+            validationError = "Invalid email"; // Only store if rendering needs it
+            handle.update();
+            return;
           }
 
           // Submit form - clear error if it exists
           if (validationError) {
-            validationError = null
-            handle.update()
+            validationError = null;
+            handle.update();
           }
         },
       }}
@@ -664,7 +666,7 @@ function FormValidator(handle: Handle) {
       <input name="email" />
       <button type="submit">Submit</button>
     </form>
-  )
+  );
 }
 ```
 
@@ -673,15 +675,15 @@ function FormValidator(handle: Handle) {
 ```tsx
 // ✅ Good: Store state that affects rendering
 function Toggle(handle: Handle) {
-  let isOpen = false // Needed for rendering conditional content
+  let isOpen = false; // Needed for rendering conditional content
 
   return () => (
     <div>
       <button
         on={{
           click() {
-            isOpen = !isOpen
-            handle.update()
+            isOpen = !isOpen;
+            handle.update();
           },
         }}
       >
@@ -689,41 +691,39 @@ function Toggle(handle: Handle) {
       </button>
       {isOpen && <div>Content</div>}
     </div>
-  )
+  );
 }
 
 // ✅ Good: Do work in handler, only store what renders need
 function SearchResults(handle: Handle) {
-  let results: string[] = [] // Needed for rendering
-  let loading = false // Needed for rendering loading state
+  let results: string[] = []; // Needed for rendering
+  let loading = false; // Needed for rendering loading state
 
   return () => (
     <div>
       <input
         on={{
           async input(event, signal) {
-            let query = event.currentTarget.value
+            let query = event.currentTarget.value;
             // Do work in handler scope
-            loading = true
-            handle.update()
+            loading = true;
+            handle.update();
 
-            let response = await fetch(`/search?q=${query}`, { signal })
-            let data = await response.json()
-            if (signal.aborted) return
+            let response = await fetch(`/search?q=${query}`, { signal });
+            let data = await response.json();
+            if (signal.aborted) return;
 
             // Only store what's needed for rendering
-            results = data.results
-            loading = false
-            handle.update()
+            results = data.results;
+            loading = false;
+            handle.update();
           },
         }}
       />
       {loading && <div>Loading...</div>}
-      {results.map((result, i) => (
-        <div key={i}>{result}</div>
-      ))}
+      {results.map((result, i) => <div key={i}>{result}</div>)}
     </div>
-  )
+  );
 }
 ```
 
@@ -738,17 +738,17 @@ function Button() {
   return () => (
     <button
       css={{
-        color: 'white',
-        backgroundColor: 'blue',
-        padding: '12px 24px',
-        borderRadius: '4px',
-        border: 'none',
-        cursor: 'pointer',
+        color: "white",
+        backgroundColor: "blue",
+        padding: "12px 24px",
+        borderRadius: "4px",
+        border: "none",
+        cursor: "pointer",
       }}
     >
       Click me
     </button>
-  )
+  );
 }
 ```
 
@@ -759,28 +759,28 @@ The `css` prop produces static styles that are inserted into the document as CSS
 ```tsx
 // ❌ Avoid: Using css prop for dynamic styles
 function ProgressBar(handle: Handle) {
-  let progress = 0
+  let progress = 0;
 
   return () => (
     <div
       css={{
         width: `${progress}%`, // Creates new CSS rule on every update
-        backgroundColor: 'blue',
+        backgroundColor: "blue",
       }}
     >
       {progress}%
     </div>
-  )
+  );
 }
 
 // ✅ Prefer: Using style prop for dynamic styles
 function ProgressBar(handle: Handle) {
-  let progress = 0
+  let progress = 0;
 
   return () => (
     <div
       css={{
-        backgroundColor: 'blue', // Static styles in css prop
+        backgroundColor: "blue", // Static styles in css prop
       }}
       style={{
         width: `${progress}%`, // Dynamic styles in style prop
@@ -788,7 +788,7 @@ function ProgressBar(handle: Handle) {
     >
       {progress}%
     </div>
-  )
+  );
 }
 ```
 
@@ -812,33 +812,33 @@ function Button() {
   return () => (
     <button
       css={{
-        color: 'white',
-        backgroundColor: 'blue',
-        padding: '12px 24px',
-        borderRadius: '4px',
-        border: 'none',
-        cursor: 'pointer',
-        '&:hover': {
-          backgroundColor: 'darkblue',
-          transform: 'translateY(-1px)',
+        color: "white",
+        backgroundColor: "blue",
+        padding: "12px 24px",
+        borderRadius: "4px",
+        border: "none",
+        cursor: "pointer",
+        "&:hover": {
+          backgroundColor: "darkblue",
+          transform: "translateY(-1px)",
         },
-        '&:active': {
-          backgroundColor: 'navy',
-          transform: 'translateY(0)',
+        "&:active": {
+          backgroundColor: "navy",
+          transform: "translateY(0)",
         },
-        '&:focus': {
-          outline: '2px solid yellow',
-          outlineOffset: '2px',
+        "&:focus": {
+          outline: "2px solid yellow",
+          outlineOffset: "2px",
         },
-        '&:disabled': {
+        "&:disabled": {
           opacity: 0.5,
-          cursor: 'not-allowed',
+          cursor: "not-allowed",
         },
       }}
     >
       Click me
     </button>
-  )
+  );
 }
 ```
 
@@ -851,23 +851,23 @@ function Badge() {
   return (props: { count: number }) => (
     <div
       css={{
-        position: 'relative',
-        display: 'inline-block',
-        '&::before': {
+        position: "relative",
+        display: "inline-block",
+        "&::before": {
           content: '""',
-          position: 'absolute',
-          top: '-4px',
-          right: '-4px',
-          width: '8px',
-          height: '8px',
-          backgroundColor: 'red',
-          borderRadius: '50%',
+          position: "absolute",
+          top: "-4px",
+          right: "-4px",
+          width: "8px",
+          height: "8px",
+          backgroundColor: "red",
+          borderRadius: "50%",
         },
       }}
     >
       {props.count > 0 && <span>{props.count}</span>}
     </div>
-  )
+  );
 }
 ```
 
@@ -881,19 +881,19 @@ function Input() {
     <input
       required={props.required}
       css={{
-        padding: '8px',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-        '&[required]': {
-          borderColor: 'red',
+        padding: "8px",
+        border: "1px solid #ccc",
+        borderRadius: "4px",
+        "&[required]": {
+          borderColor: "red",
         },
         '&[aria-invalid="true"]': {
-          borderColor: 'red',
-          outline: '2px solid red',
+          borderColor: "red",
+          outline: "2px solid red",
         },
       }}
     />
-  )
+  );
 }
 ```
 
@@ -906,34 +906,34 @@ function Card() {
   return (props: { children: RemixNode }) => (
     <div
       css={{
-        padding: '20px',
-        border: '1px solid #ddd',
-        borderRadius: '8px',
-        backgroundColor: 'white',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        padding: "20px",
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+        backgroundColor: "white",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
         // Style descendants
-        '& h2': {
+        "& h2": {
           marginTop: 0,
-          fontSize: '24px',
-          fontWeight: 'bold',
+          fontSize: "24px",
+          fontWeight: "bold",
         },
-        '& p': {
-          color: '#666',
+        "& p": {
+          color: "#666",
           lineHeight: 1.6,
         },
-        '& .icon': {
-          width: '24px',
-          height: '24px',
-          marginRight: '8px',
+        "& .icon": {
+          width: "24px",
+          height: "24px",
+          marginRight: "8px",
         },
-        '& button': {
-          marginTop: '16px',
+        "& button": {
+          marginTop: "16px",
         },
       }}
     >
       {props.children}
     </div>
-  )
+  );
 }
 ```
 
@@ -958,30 +958,30 @@ Use nested selectors when **parent state affects children**. Don't nest when you
 ```tsx
 // ❌ Avoid: Managing hover state in JavaScript
 function CardWithJSState(handle: Handle) {
-  let isHovered = false
+  let isHovered = false;
 
   return (props: { children: RemixNode }) => (
     <div
       on={{
         mouseenter() {
-          isHovered = true
-          handle.update()
+          isHovered = true;
+          handle.update();
         },
         mouseleave() {
-          isHovered = false
-          handle.update()
+          isHovered = false;
+          handle.update();
         },
       }}
       css={{
-        border: `1px solid ${isHovered ? 'blue' : '#ddd'}`,
+        border: `1px solid ${isHovered ? "blue" : "#ddd"}`,
         // ... more conditional styling based on isHovered
       }}
     >
-      <div className="title" css={{ color: isHovered ? 'blue' : '#333' }}>
+      <div className="title" css={{ color: isHovered ? "blue" : "#333" }}>
         Title
       </div>
     </div>
-  )
+  );
 }
 
 // ✅ Prefer: CSS nested selectors handle state declaratively
@@ -989,34 +989,34 @@ function Card(handle: Handle) {
   return (props: { children: RemixNode }) => (
     <div
       css={{
-        border: '1px solid #ddd',
-        borderRadius: '8px',
-        padding: '20px',
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+        padding: "20px",
         // Parent hover affects children - use nested selector
-        '&:hover': {
-          borderColor: 'blue',
+        "&:hover": {
+          borderColor: "blue",
           // Child text changes color on parent hover
-          '& .title': {
-            color: 'blue',
+          "& .title": {
+            color: "blue",
           },
-          '& .description': {
+          "& .description": {
             opacity: 1,
           },
         },
-        '& .title': {
-          fontSize: '20px',
-          fontWeight: 'bold',
-          color: '#333',
+        "& .title": {
+          fontSize: "20px",
+          fontWeight: "bold",
+          color: "#333",
         },
-        '& .description': {
+        "& .description": {
           opacity: 0.7,
-          marginTop: '8px',
+          marginTop: "8px",
         },
       }}
     >
       <div className="title">Title</div>
     </div>
-  )
+  );
 }
 ```
 
@@ -1027,24 +1027,24 @@ function Button() {
   return () => (
     <button
       css={{
-        backgroundColor: 'blue',
-        color: 'white',
-        padding: '12px 24px',
-        borderRadius: '4px',
-        border: 'none',
-        cursor: 'pointer',
+        backgroundColor: "blue",
+        color: "white",
+        padding: "12px 24px",
+        borderRadius: "4px",
+        border: "none",
+        cursor: "pointer",
         // Element's own hover - style directly, no nesting needed
-        '&:hover': {
-          backgroundColor: 'darkblue',
+        "&:hover": {
+          backgroundColor: "darkblue",
         },
-        '&:active': {
-          transform: 'scale(0.98)',
+        "&:active": {
+          transform: "scale(0.98)",
         },
       }}
     >
       Click me
     </button>
-  )
+  );
 }
 ```
 
@@ -1055,22 +1055,22 @@ function Navigation() {
   return () => (
     <nav
       css={{
-        display: 'flex',
-        gap: '16px',
+        display: "flex",
+        gap: "16px",
         // Styling descendant links - appropriate use of nesting
-        '& a': {
-          color: 'blue',
-          textDecoration: 'none',
-          padding: '8px 16px',
-          borderRadius: '4px',
+        "& a": {
+          color: "blue",
+          textDecoration: "none",
+          padding: "8px 16px",
+          borderRadius: "4px",
           // Link's own hover state - this is fine nested under '& a'
-          '&:hover': {
-            backgroundColor: '#f0f0f0',
-            color: 'darkblue',
+          "&:hover": {
+            backgroundColor: "#f0f0f0",
+            color: "darkblue",
           },
           '&[aria-current="page"]': {
-            backgroundColor: 'blue',
-            color: 'white',
+            backgroundColor: "blue",
+            color: "white",
           },
         },
       }}
@@ -1079,7 +1079,7 @@ function Navigation() {
       <a href="/about">About</a>
       <a href="/contact">Contact</a>
     </nav>
-  )
+  );
 }
 ```
 
@@ -1092,20 +1092,20 @@ function ResponsiveGrid() {
   return (props: { children: RemixNode }) => (
     <div
       css={{
-        display: 'grid',
-        gap: '16px',
-        gridTemplateColumns: '1fr',
-        '@media (min-width: 768px)': {
-          gridTemplateColumns: 'repeat(2, 1fr)',
+        display: "grid",
+        gap: "16px",
+        gridTemplateColumns: "1fr",
+        "@media (min-width: 768px)": {
+          gridTemplateColumns: "repeat(2, 1fr)",
         },
-        '@media (min-width: 1024px)': {
-          gridTemplateColumns: 'repeat(3, 1fr)',
+        "@media (min-width: 1024px)": {
+          gridTemplateColumns: "repeat(3, 1fr)",
         },
       }}
     >
       {props.children}
     </div>
-  )
+  );
 }
 ```
 
@@ -1118,25 +1118,25 @@ function ProductCard() {
   return (props: { title: string; price: number; image: string }) => (
     <div
       css={{
-        border: '1px solid #ddd',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        transition: 'transform 0.2s, box-shadow 0.2s',
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+        overflow: "hidden",
+        transition: "transform 0.2s, box-shadow 0.2s",
         // Parent hover affects the card itself
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        "&:hover": {
+          transform: "translateY(-4px)",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
           // Parent hover affects children - appropriate use of nesting
-          '& .title': {
-            color: 'blue',
+          "& .title": {
+            color: "blue",
           },
-          '& button': {
-            backgroundColor: 'darkblue',
+          "& button": {
+            backgroundColor: "darkblue",
           },
         },
-        '@media (max-width: 768px)': {
-          '&:hover': {
-            transform: 'translateY(-2px)',
+        "@media (max-width: 768px)": {
+          "&:hover": {
+            transform: "translateY(-2px)",
           },
         },
       }}
@@ -1145,31 +1145,31 @@ function ProductCard() {
         src={props.image}
         alt={props.title}
         css={{
-          width: '100%',
-          height: '200px',
-          objectFit: 'cover',
-          '@media (max-width: 768px)': {
-            height: '150px',
+          width: "100%",
+          height: "200px",
+          objectFit: "cover",
+          "@media (max-width: 768px)": {
+            height: "150px",
           },
         }}
       />
       <div
         className="content"
         css={{
-          padding: '16px',
-          '@media (max-width: 768px)': {
-            padding: '12px',
+          padding: "16px",
+          "@media (max-width: 768px)": {
+            padding: "12px",
           },
         }}
       >
         <h3
           className="title"
           css={{
-            fontSize: '18px',
-            fontWeight: 'bold',
+            fontSize: "18px",
+            fontWeight: "bold",
             marginTop: 0,
-            marginBottom: '8px',
-            transition: 'color 0.2s',
+            marginBottom: "8px",
+            transition: "color 0.2s",
           }}
         >
           {props.title}
@@ -1177,25 +1177,25 @@ function ProductCard() {
         <div
           className="price"
           css={{
-            fontSize: '20px',
-            color: 'green',
-            fontWeight: 'bold',
+            fontSize: "20px",
+            color: "green",
+            fontWeight: "bold",
           }}
         >
           ${props.price}
         </div>
         <button
           css={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: 'blue',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s',
-            '&:active': {
-              transform: 'scale(0.98)',
+            width: "100%",
+            padding: "12px",
+            backgroundColor: "blue",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            transition: "background-color 0.2s",
+            "&:active": {
+              transform: "scale(0.98)",
             },
           }}
         >
@@ -1203,7 +1203,7 @@ function ProductCard() {
         </button>
       </div>
     </div>
-  )
+  );
 }
 ```
 
@@ -1220,7 +1220,7 @@ Use the `connect` prop to get a reference to the DOM node after it's rendered. T
 
 ```tsx
 function Form(handle: Handle) {
-  let inputRef: HTMLInputElement
+  let inputRef: HTMLInputElement;
 
   return () => (
     <form>
@@ -1229,14 +1229,14 @@ function Form(handle: Handle) {
         on={{
           click() {
             // Focus the input from elsewhere in the form
-            inputRef.focus()
+            inputRef.focus();
           },
         }}
       >
         Focus Input
       </button>
     </form>
-  )
+  );
 }
 ```
 
@@ -1244,31 +1244,31 @@ The `connect` callback can optionally receive an `AbortSignal` as a second param
 
 ```tsx
 function ResizeTracker(handle: Handle) {
-  let dimensions = { width: 0, height: 0 }
+  let dimensions = { width: 0, height: 0 };
 
   return () => (
     <div
       connect={(node, signal) => {
         // Set up ResizeObserver
         let observer = new ResizeObserver((entries) => {
-          let entry = entries[0]
+          let entry = entries[0];
           if (entry) {
-            dimensions.width = Math.round(entry.contentRect.width)
-            dimensions.height = Math.round(entry.contentRect.height)
-            handle.update()
+            dimensions.width = Math.round(entry.contentRect.width);
+            dimensions.height = Math.round(entry.contentRect.height);
+            handle.update();
           }
-        })
-        observer.observe(node)
+        });
+        observer.observe(node);
 
         // Clean up when element is removed
-        signal.addEventListener('abort', () => {
-          observer.disconnect()
-        })
+        signal.addEventListener("abort", () => {
+          observer.disconnect();
+        });
       }}
     >
       Size: {dimensions.width} × {dimensions.height}
     </div>
-  )
+  );
 }
 ```
 
@@ -1281,18 +1281,16 @@ Use the `key` prop to uniquely identify elements in lists. Keys enable efficient
 ```tsx
 function TodoList(handle: Handle) {
   let todos = [
-    { id: '1', text: 'Buy milk' },
-    { id: '2', text: 'Walk dog' },
-    { id: '3', text: 'Write code' },
-  ]
+    { id: "1", text: "Buy milk" },
+    { id: "2", text: "Walk dog" },
+    { id: "3", text: "Write code" },
+  ];
 
   return () => (
     <ul>
-      {todos.map((todo) => (
-        <li key={todo.id}>{todo.text}</li>
-      ))}
+      {todos.map((todo) => <li key={todo.id}>{todo.text}</li>)}
     </ul>
-  )
+  );
 }
 ```
 
@@ -1306,14 +1304,14 @@ When you reorder, add, or remove items, keys ensure:
 ```tsx
 function ReorderableList(handle: Handle) {
   let items = [
-    { id: 'a', label: 'Item A' },
-    { id: 'b', label: 'Item B' },
-    { id: 'c', label: 'Item C' },
-  ]
+    { id: "a", label: "Item A" },
+    { id: "b", label: "Item B" },
+    { id: "c", label: "Item C" },
+  ];
 
   function reverse() {
-    items = [...items].reverse()
-    handle.update()
+    items = [...items].reverse();
+    handle.update();
   }
 
   return () => (
@@ -1331,7 +1329,7 @@ function ReorderableList(handle: Handle) {
         </div>
       ))}
     </div>
-  )
+  );
 }
 ```
 
@@ -1342,17 +1340,17 @@ Keys can be any type (string, number, bigint, object, symbol), but should be sta
 ```tsx
 // Good: stable, unique IDs
 {
-  items.map((item) => <Item key={item.id} item={item} />)
+  items.map((item) => <Item key={item.id} item={item} />);
 }
 
 // Good: index can work if list never reorders
 {
-  items.map((item, index) => <Item key={index} item={item} />)
+  items.map((item, index) => <Item key={index} item={item} />);
 }
 
 // Bad: don't use random values or values that change
 {
-  items.map((item) => <Item key={Math.random()} item={item} />)
+  items.map((item) => <Item key={Math.random()} item={item} />);
 }
 ```
 
@@ -1363,12 +1361,12 @@ Components can compose other components via `children`:
 ```tsx
 function Layout() {
   return (props: { children: RemixNode }) => (
-    <div css={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div css={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
       <header>My App</header>
       <main>{props.children}</main>
       <footer>© 2024</footer>
     </div>
-  )
+  );
 }
 
 function App() {
@@ -1377,7 +1375,7 @@ function App() {
       <h1>Welcome</h1>
       <p>Content goes here</p>
     </Layout>
-  )
+  );
 }
 ```
 
@@ -1388,19 +1386,19 @@ Context enables components to communicate without direct prop passing:
 #### Basic Context
 
 ```tsx
-function ThemeProvider(handle: Handle<{ theme: 'light' | 'dark' }>) {
-  let theme: 'light' | 'dark' = 'light'
+function ThemeProvider(handle: Handle<{ theme: "light" | "dark" }>) {
+  let theme: "light" | "dark" = "light";
 
-  handle.context.set({ theme })
+  handle.context.set({ theme });
 
   return (props: { children: RemixNode }) => (
     <div>
       <button
         on={{
           click() {
-            theme = theme === 'light' ? 'dark' : 'light'
-            handle.context.set({ theme })
-            handle.update()
+            theme = theme === "light" ? "dark" : "light";
+            handle.context.set({ theme });
+            handle.update();
           },
         }}
       >
@@ -1408,15 +1406,17 @@ function ThemeProvider(handle: Handle<{ theme: 'light' | 'dark' }>) {
       </button>
       {props.children}
     </div>
-  )
+  );
 }
 
 function ThemedContent(handle: Handle) {
-  let { theme } = handle.context.get(ThemeProvider)
+  let { theme } = handle.context.get(ThemeProvider);
 
   return () => (
-    <div css={{ backgroundColor: theme === 'dark' ? '#000' : '#fff' }}>Current theme: {theme}</div>
-  )
+    <div css={{ backgroundColor: theme === "dark" ? "#000" : "#fff" }}>
+      Current theme: {theme}
+    </div>
+  );
 }
 ```
 
@@ -1427,24 +1427,24 @@ function ThemedContent(handle: Handle) {
 For better performance, use `TypedEventTarget` to avoid updating the entire subtree:
 
 ```tsx
-import { TypedEventTarget } from '@remix-run/interaction'
+import { TypedEventTarget } from "@remix-run/interaction";
 
 class Theme extends TypedEventTarget<{ change: Event }> {
-  #value: 'light' | 'dark' = 'light'
+  #value: "light" | "dark" = "light";
 
   get value() {
-    return this.#value
+    return this.#value;
   }
 
-  setValue(value: 'light' | 'dark') {
-    this.#value = value
-    this.dispatchEvent(new Event('change'))
+  setValue(value: "light" | "dark") {
+    this.#value = value;
+    this.dispatchEvent(new Event("change"));
   }
 }
 
 function ThemeProvider(handle: Handle<Theme>) {
-  let theme = new Theme()
-  handle.context.set(theme)
+  let theme = new Theme();
+  handle.context.set(theme);
 
   return (props: { children: RemixNode }) => (
     <div>
@@ -1452,7 +1452,7 @@ function ThemeProvider(handle: Handle<Theme>) {
         on={{
           click() {
             // No update needed - consumers subscribe to changes
-            theme.setValue(theme.value === 'light' ? 'dark' : 'light')
+            theme.setValue(theme.value === "light" ? "dark" : "light");
           },
         }}
       >
@@ -1460,24 +1460,24 @@ function ThemeProvider(handle: Handle<Theme>) {
       </button>
       {props.children}
     </div>
-  )
+  );
 }
 
 function ThemedContent(handle: Handle) {
-  let theme = handle.context.get(ThemeProvider)
+  let theme = handle.context.get(ThemeProvider);
 
   // Subscribe to granular updates
   handle.on(theme, {
     change() {
-      handle.update()
+      handle.update();
     },
-  })
+  });
 
   return () => (
-    <div css={{ backgroundColor: theme.value === 'dark' ? '#000' : '#fff' }}>
+    <div css={{ backgroundColor: theme.value === "dark" ? "#000" : "#fff" }}>
       Current theme: {theme.value}
     </div>
-  )
+  );
 }
 ```
 
@@ -1492,21 +1492,21 @@ The setup scope is perfect for one-time initialization:
 ```tsx
 function CacheExample(handle: Handle, setup: { cacheSize: number }) {
   // Initialize cache once
-  let cache = new Map<string, any>()
-  let maxSize = setup.cacheSize
+  let cache = new Map<string, any>();
+  let maxSize = setup.cacheSize;
 
   return (props: { key: string; value: any }) => {
     // Use cache in render
     if (cache.has(props.key)) {
-      return <div>Cached: {cache.get(props.key)}</div>
+      return <div>Cached: {cache.get(props.key)}</div>;
     }
-    cache.set(props.key, props.value)
+    cache.set(props.key, props.value);
     if (cache.size > maxSize) {
-      let firstKey = cache.keys().next().value
-      cache.delete(firstKey)
+      let firstKey = cache.keys().next().value;
+      cache.delete(firstKey);
     }
-    return <div>New: {props.value}</div>
-  }
+    return <div>New: {props.value}</div>;
+  };
 }
 ```
 
@@ -1515,34 +1515,34 @@ function CacheExample(handle: Handle, setup: { cacheSize: number }) {
 ```tsx
 function Analytics(handle: Handle, setup: { apiKey: string }) {
   // Initialize SDK once
-  let analytics = new AnalyticsSDK(setup.apiKey)
+  let analytics = new AnalyticsSDK(setup.apiKey);
 
   // Cleanup on disconnect
-  handle.signal.addEventListener('abort', () => {
-    analytics.disconnect()
-  })
+  handle.signal.addEventListener("abort", () => {
+    analytics.disconnect();
+  });
 
   return (props: { event: string; data?: any }) => {
     // SDK is ready to use
-    return <div>Tracking: {props.event}</div>
-  }
+    return <div>Tracking: {props.event}</div>;
+  };
 }
 ```
 
 #### EventEmitters
 
 ```tsx
-import { TypedEventTarget } from '@remix-run/interaction'
+import { TypedEventTarget } from "@remix-run/interaction";
 
 class DataEvent extends Event {
   constructor(public value: string) {
-    super('data')
+    super("data");
   }
 }
 
 class DataEmitter extends TypedEventTarget<{ data: DataEvent }> {
   emitData(value: string) {
-    this.dispatchEvent(new DataEvent(value))
+    this.dispatchEvent(new DataEvent(value));
   }
 }
 
@@ -1551,11 +1551,11 @@ function EventListener(handle: Handle, setup: DataEmitter) {
   handle.on(setup, {
     data(event) {
       // Handle data
-      handle.update()
+      handle.update();
     },
-  })
+  });
 
-  return () => <div>Listening for events...</div>
+  return () => <div>Listening for events...</div>;
 }
 ```
 
@@ -1563,23 +1563,23 @@ function EventListener(handle: Handle, setup: DataEmitter) {
 
 ```tsx
 function WindowResizeTracker(handle: Handle) {
-  let width = window.innerWidth
-  let height = window.innerHeight
+  let width = window.innerWidth;
+  let height = window.innerHeight;
 
   // Set up global listeners once
   handle.on(window, {
     resize() {
-      width = window.innerWidth
-      height = window.innerHeight
-      handle.update()
+      width = window.innerWidth;
+      height = window.innerHeight;
+      handle.update();
     },
-  })
+  });
 
   return () => (
     <div>
       Window size: {width} × {height}
     </div>
-  )
+  );
 }
 ```
 
@@ -1588,39 +1588,39 @@ function WindowResizeTracker(handle: Handle) {
 ```tsx
 function Timer(handle: Handle, setup: { initialSeconds: number }) {
   // Initialize from setup prop
-  let seconds = setup.initialSeconds
-  let interval: number | null = null
+  let seconds = setup.initialSeconds;
+  let interval: number | null = null;
 
   function start() {
-    if (interval) return
+    if (interval) return;
     interval = setInterval(() => {
-      seconds--
+      seconds--;
       if (seconds <= 0) {
-        stop()
+        stop();
       }
-      handle.update()
-    }, 1000)
+      handle.update();
+    }, 1000);
   }
 
   function stop() {
     if (interval) {
-      clearInterval(interval)
-      interval = null
+      clearInterval(interval);
+      interval = null;
     }
   }
 
   // Cleanup on disconnect
-  handle.signal.addEventListener('abort', stop)
+  handle.signal.addEventListener("abort", stop);
 
   return (props: { paused?: boolean }) => {
     if (!props.paused && !interval) {
-      start()
+      start();
     } else if (props.paused && interval) {
-      stop()
+      stop();
     }
 
-    return <div>Time remaining: {seconds}s</div>
-  }
+    return <div>Time remaining: {seconds}s</div>;
+  };
 }
 ```
 
@@ -1632,9 +1632,9 @@ Use `handle.queueTask()` in event handlers for DOM operations that need to happe
 
 ```tsx
 function Modal(handle: Handle) {
-  let isOpen = false
-  let closeButton: HTMLButtonElement
-  let openButton: HTMLButtonElement
+  let isOpen = false;
+  let closeButton: HTMLButtonElement;
+  let openButton: HTMLButtonElement;
 
   return () => (
     <div>
@@ -1642,12 +1642,12 @@ function Modal(handle: Handle) {
         connect={(node) => (openButton = node)}
         on={{
           click() {
-            isOpen = true
-            handle.update()
+            isOpen = true;
+            handle.update();
             // Queue focus operation after modal renders
             handle.queueTask(() => {
-              closeButton.focus()
-            })
+              closeButton.focus();
+            });
           },
         }}
       >
@@ -1660,12 +1660,12 @@ function Modal(handle: Handle) {
             connect={(node) => (closeButton = node)}
             on={{
               click() {
-                isOpen = false
-                handle.update()
+                isOpen = false;
+                handle.update();
                 // Queue focus operation after modal closes
                 handle.queueTask(() => {
-                  openButton.focus()
-                })
+                  openButton.focus();
+                });
               },
             }}
           >
@@ -1674,7 +1674,7 @@ function Modal(handle: Handle) {
         </div>
       )}
     </div>
-  )
+  );
 }
 ```
 
@@ -1682,9 +1682,9 @@ function Modal(handle: Handle) {
 
 ```tsx
 function ScrollableList(handle: Handle) {
-  let items: string[] = []
-  let newItemInput: HTMLInputElement
-  let listContainer: HTMLElement
+  let items: string[] = [];
+  let newItemInput: HTMLInputElement;
+  let listContainer: HTMLElement;
 
   return () => (
     <div>
@@ -1692,16 +1692,16 @@ function ScrollableList(handle: Handle) {
         connect={(node) => (newItemInput = node)}
         on={{
           keydown(event) {
-            if (event.key === 'Enter') {
-              let text = event.currentTarget.value
+            if (event.key === "Enter") {
+              let text = event.currentTarget.value;
               if (text.trim()) {
-                items.push(text)
-                event.currentTarget.value = ''
-                handle.update()
+                items.push(text);
+                event.currentTarget.value = "";
+                handle.update();
                 // Queue scroll operation after new item renders
                 handle.queueTask(() => {
-                  listContainer.scrollTop = listContainer.scrollHeight
-                })
+                  listContainer.scrollTop = listContainer.scrollHeight;
+                });
               }
             }
           },
@@ -1710,16 +1710,14 @@ function ScrollableList(handle: Handle) {
       <div
         connect={(node) => (listContainer = node)}
         css={{
-          maxHeight: '300px',
-          overflowY: 'auto',
+          maxHeight: "300px",
+          overflowY: "auto",
         }}
       >
-        {items.map((item, i) => (
-          <div key={i}>{item}</div>
-        ))}
+        {items.map((item, i) => <div key={i}>{item}</div>)}
       </div>
     </div>
-  )
+  );
 }
 ```
 
@@ -1733,7 +1731,7 @@ Only control an input's value when something besides the user's interaction with
 
 ```tsx
 function SearchInput(handle: Handle) {
-  let results: string[] = []
+  let results: string[] = [];
 
   return () => (
     <div>
@@ -1742,13 +1740,13 @@ function SearchInput(handle: Handle) {
         on={{
           async input(event, signal) {
             // Read value directly from the input - no component state needed
-            let query = event.currentTarget.value
+            let query = event.currentTarget.value;
             // ... use query for search
           },
         }}
       />
     </div>
-  )
+  );
 }
 ```
 
@@ -1762,8 +1760,8 @@ function SearchInput(handle: Handle) {
 
 ```tsx
 function SlugForm(handle: Handle) {
-  let slug = ''
-  let generatedSlug = ''
+  let slug = "";
+  let generatedSlug = "";
 
   return () => (
     <form>
@@ -1773,11 +1771,11 @@ function SlugForm(handle: Handle) {
           on={{
             change(event) {
               if (event.currentTarget.checked) {
-                generatedSlug = crypto.randomUUID().slice(0, 8)
+                generatedSlug = crypto.randomUUID().slice(0, 8);
               } else {
-                generatedSlug = ''
+                generatedSlug = "";
               }
-              handle.update()
+              handle.update();
             },
           }}
         />
@@ -1791,14 +1789,14 @@ function SlugForm(handle: Handle) {
           disabled={!!generatedSlug}
           on={{
             input(event) {
-              slug = event.currentTarget.value
-              handle.update()
+              slug = event.currentTarget.value;
+              handle.update();
             },
           }}
         />
       </label>
     </form>
-  )
+  );
 }
 ```
 
@@ -1832,8 +1830,8 @@ Event handlers receive an `AbortSignal` that's aborted when the handler is re-en
 
 ```tsx
 function SearchInput(handle: Handle) {
-  let results: string[] = []
-  let loading = false
+  let results: string[] = [];
+  let loading = false;
 
   return () => (
     <div>
@@ -1841,32 +1839,30 @@ function SearchInput(handle: Handle) {
         type="text"
         on={{
           async input(event, signal) {
-            let query = event.currentTarget.value
-            loading = true
-            handle.update()
+            let query = event.currentTarget.value;
+            loading = true;
+            handle.update();
 
             // Passing signal automatically aborts previous requests
-            let response = await fetch(`/search?q=${query}`, { signal })
-            let data = await response.json()
+            let response = await fetch(`/search?q=${query}`, { signal });
+            let data = await response.json();
             // Manual check for APIs that don't accept a signal
-            if (signal.aborted) return
+            if (signal.aborted) return;
 
-            results = data.results
-            loading = false
-            handle.update()
+            results = data.results;
+            loading = false;
+            handle.update();
           },
         }}
       />
       {loading && <div>Loading...</div>}
       {!loading && results.length > 0 && (
         <ul>
-          {results.map((result, i) => (
-            <li key={i}>{result}</li>
-          ))}
+          {results.map((result, i) => <li key={i}>{result}</li>)}
         </ul>
       )}
     </div>
-  )
+  );
 }
 ```
 
@@ -1883,31 +1879,31 @@ Use `handle.queueTask()` in the render function for reactive data loading that r
 
 ```tsx
 function DataLoader(handle: Handle) {
-  let data: any = null
-  let loading = false
-  let error: Error | null = null
+  let data: any = null;
+  let loading = false;
+  let error: Error | null = null;
 
   return (props: { url: string }) => {
     // Queue data loading task that responds to prop changes
     handle.queueTask(async (signal) => {
-      loading = true
-      error = null
-      handle.update()
+      loading = true;
+      error = null;
+      handle.update();
 
-      let response = await fetch(props.url, { signal })
-      let json = await response.json()
-      if (signal.aborted) return
-      data = json
-      loading = false
-      handle.update()
-    })
+      let response = await fetch(props.url, { signal });
+      let json = await response.json();
+      if (signal.aborted) return;
+      data = json;
+      loading = false;
+      handle.update();
+    });
 
-    if (loading) return <div>Loading...</div>
-    if (error) return <div>Error: {error.message}</div>
-    if (!data) return <div>No data</div>
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error.message}</div>;
+    if (!data) return <div>No data</div>;
 
-    return <div>{JSON.stringify(data)}</div>
-  }
+    return <div>{JSON.stringify(data)}</div>;
+  };
 }
 ```
 
@@ -1924,29 +1920,29 @@ Load initial data in the setup scope:
 
 ```tsx
 function UserProfile(handle: Handle, setup: { userId: string }) {
-  let user: User | null = null
-  let loading = true
+  let user: User | null = null;
+  let loading = true;
 
   // Load initial data in setup scope using queueTask
   handle.queueTask(async (signal) => {
-    let response = await fetch(`/api/users/${setup.userId}`, { signal })
-    let data = await response.json()
-    if (signal.aborted) return
-    user = data
-    loading = false
-    handle.update()
-  })
+    let response = await fetch(`/api/users/${setup.userId}`, { signal });
+    let data = await response.json();
+    if (signal.aborted) return;
+    user = data;
+    loading = false;
+    handle.update();
+  });
 
   return (props: { showEmail?: boolean }) => {
-    if (loading) return <div>Loading user...</div>
+    if (loading) return <div>Loading user...</div>;
 
     return (
       <div>
         <h1>{user.name}</h1>
         {props.showEmail && <p>{user.email}</p>}
       </div>
-    )
-  }
+    );
+  };
 }
 ```
 
@@ -1960,34 +1956,34 @@ The main use case is flushing after events that call `handle.update()`. Since up
 
 ```tsx
 function Counter(handle: Handle) {
-  let count = 0
+  let count = 0;
 
   return () => (
     <button
       on={{
         click() {
-          count++
-          handle.update()
+          count++;
+          handle.update();
         },
       }}
     >
       Count: {count}
     </button>
-  )
+  );
 }
 
 // In your test
-let container = document.createElement('div')
-let root = createRoot(container)
+let container = document.createElement("div");
+let root = createRoot(container);
 
-root.render(<Counter />)
-root.flush() // Ensure initial render completes
+root.render(<Counter />);
+root.flush(); // Ensure initial render completes
 
-let button = container.querySelector('button')
-button.click() // Triggers handle.update()
-root.flush() // Flush to apply the update
+let button = container.querySelector("button");
+button.click(); // Triggers handle.update()
+root.flush(); // Flush to apply the update
 
-expect(container.textContent).toBe('Count: 1')
+expect(container.textContent).toBe("Count: 1");
 ```
 
 You should also flush after the initial `root.render()` to ensure event listeners are attached and the DOM is ready for interaction.

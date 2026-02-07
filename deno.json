@@ -6,9 +6,10 @@
     "./server"
   ],
   "tasks": {
+    "check": "deno fmt --check && deno lint && deno check && deno test -P",
     "build": "deno task --cwd=client build",
     "dev": "deno task --cwd=server dev",
-    "serve": "deno task --cwd=server serve"
+    "serve": "deno serve --allow-read=./client/_site server/serve.ts"
   },
   "imports": {
     "@hono/hono": "jsr:@hono/hono@^4.10.8",

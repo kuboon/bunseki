@@ -64,7 +64,12 @@ app.route("/", dashboardApiRouter);
 
 // Serve static files from Lume build output with dynamic parameter resolution
 // This automatically resolves paths like /dashboard/:serviceName/index.js
-app.get("*", serveDynamicStatic({ root: "../client/_site" }));
+app.get(
+  "*",
+  serveDynamicStatic({
+    root: new URL("../client/_site", import.meta.url).pathname,
+  }),
+);
 
 export default {
   fetch: app.fetch.bind(app),
