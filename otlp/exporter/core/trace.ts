@@ -3,14 +3,14 @@ import {
   SpanKind,
   SpanType,
   tracesRequestSchema,
-} from "../schemas.ts";
+} from "../../schemas.ts";
 import {
+  AttributePrimitive,
   bytesToHex,
-  toAttributeValue as attrValue,
-  toKeyValue as spanAttr,
+  toAttributes,
   toUnixNano,
-} from "../protojson.ts";
-import { dateNow, ExporterConfig } from "./utils.ts";
+} from "../../protojson.ts";
+import { dateNow, ExporterConfig } from "../utils.ts";
 
 const randomBytes = (length: number) =>
   crypto.getRandomValues(new Uint8Array(length));
@@ -52,9 +52,9 @@ export class Trace {
       resourceSpans: [
         {
           resource: {
-            attributes: [
-              spanAttr("service.name", this.exporter.serviceName),
-            ],
+            attributes: toAttributes({
+              "service.name": this.exporter.serviceName,
+            }),
           },
           scopeSpans: [
             {
@@ -67,11 +67,16 @@ export class Trace {
     } satisfies typeof tracesRequestSchema.infer;
   }
   async post() {
-    const ret = await this.exporter.client.v1.traces.$post({
-      json: this.toJSON(),
-    });
-    for (const span of this.spans) span.posted = true;
-    return ret;
+    try {
+      const ret = await this.exporter.client.v1.traces.$post({
+        json: this.toJSON(),
+      });
+      for (const span of this.spans) span.posted = true;
+      return { ok: true as const, response: ret };
+    } catch (error) {
+      console.error("Failed to post trace data:", error);
+      return { ok: false as const, error: error as Error };
+    }
   }
 }
 
@@ -86,7 +91,7 @@ class Span {
   endAt: number | null = null;
   readonly spanId = generateSpanId();
   readonly parentSpanId?: string;
-  readonly attributes: Record<string, ReturnType<typeof attrValue>> = {};
+  readonly attributes: Record<string, AttributePrimitive> = {};
   readonly events: SpanEventType[] = [];
   status?: { code: number; message?: string };
   posted = false;
@@ -112,28 +117,36 @@ class Span {
     span.end();
     return ret;
   }
-  addAttribute(key: string, value: Parameters<typeof attrValue>[0]) {
-    this.attributes[key] = attrValue(value);
+  addAttribute(key: string, value: AttributePrimitive) {
+    this.attributes[key] = value;
   }
-  addErrorEvent(error: Error, { escaped = false } = {}) {
-    const stacktrace = error.stack?.split("\n").map((s) => s.trim()) || [];
+  addEvent(
+    { name, attr = {} }: {
+      name: string;
+      attr?: Record<string, AttributePrimitive>;
+    },
+  ) {
     const event: SpanEventType = {
-      name: "exception",
+      name,
       timeUnixNano: unixNanoString(),
-      attributes: [
-        spanAttr("exception.type", error.name),
-        spanAttr("exception.message", error.message),
-        spanAttr("exception.stacktrace", stacktrace),
-        spanAttr("exception.escaped", escaped),
-      ],
+      attributes: toAttributes(attr),
     };
     this.events.push(event);
   }
+  addErrorEvent(error: Error, { escaped = false } = {}) {
+    const stacktrace = error.stack?.split("\n").map((s) => s.trim()) || [];
+    this.addEvent({
+      name: "exception",
+      attr: {
+        "exception.type": error.name,
+        "exception.message": error.message,
+        "exception.stacktrace": stacktrace,
+        "exception.escaped": escaped,
+      },
+    });
+  }
   toJSON() {
-    const attributes = Object.entries(this.attributes).map(([key, value]) => ({
-      key,
-      value,
-    }));
+    const attributes = toAttributes(this.attributes);
     this.endAt = this.endAt || dateNow();
     return {
       traceId: this.trace.traceId,
@@ -153,5 +166,33 @@ class Span {
   async postError(error: Error) {
     this.addErrorEvent(error);
     return await this.post();
+  }
+  // no need to do `.bind(span)`
+  get fetch() {
+    return (input: RequestInfo, init: RequestInit = {}) => {
+      return this.inSpan("fetch", (span) => {
+        span.addAttribute(
+          "http.url",
+          typeof input === "string" ? input : input.url,
+        );
+        span.addAttribute("http.method", init.method || "GET");
+        const headers = new Headers(init.headers);
+        headers.set("traceparent", this.traceparent);
+        init.headers = headers;
+        const start = performance.now();
+        return fetch(input, init).then((response) => {
+          span.addAttribute("http.status_code", response.status);
+          span.addAttribute(
+            "http.duration_ms",
+            performance.now() - start,
+          );
+          return response;
+        }).catch((error) => {
+          span.postError(error).then(() => {
+            throw error;
+          });
+        });
+      });
+    };
   }
 }

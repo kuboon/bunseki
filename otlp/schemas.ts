@@ -47,7 +47,7 @@ export const SpanKind = {
   CLIENT: 3,
   PRODUCER: 4,
   CONSUMER: 5,
-};
+} as const;
 
 // Span
 const Span = type({

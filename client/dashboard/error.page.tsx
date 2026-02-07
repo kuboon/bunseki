@@ -53,13 +53,16 @@ function ServiceErrorPage({ serviceName }: ServiceErrorPageProps) {
 
             <div class="flex gap-4 mt-4 text-sm opacity-70">
               <div>
-                <span class="font-bold">Count:</span> <span id="error-count"></span>
+                <span class="font-bold">Count:</span>{" "}
+                <span id="error-count"></span>
               </div>
               <div>
-                <span class="font-bold">First Seen:</span> <span id="error-first-seen"></span>
+                <span class="font-bold">First Seen:</span>{" "}
+                <span id="error-first-seen"></span>
               </div>
               <div>
-                <span class="font-bold">Last Seen:</span> <span id="error-last-seen"></span>
+                <span class="font-bold">Last Seen:</span>{" "}
+                <span id="error-last-seen"></span>
               </div>
             </div>
           </div>
@@ -68,7 +71,9 @@ function ServiceErrorPage({ serviceName }: ServiceErrorPageProps) {
         {/* Stacktrace */}
         <div class="card bg-base-200 shadow-xl mb-8">
           <div class="card-body">
-            <h3 class="card-title text-sm uppercase tracking-wide opacity-70">Stacktrace</h3>
+            <h3 class="card-title text-sm uppercase tracking-wide opacity-70">
+              Stacktrace
+            </h3>
             <div class="mockup-code bg-neutral text-neutral-content">
               <pre><code id="error-stacktrace" class="block p-4 overflow-x-auto"></code></pre>
             </div>
@@ -78,7 +83,9 @@ function ServiceErrorPage({ serviceName }: ServiceErrorPageProps) {
         {/* Spans */}
         <div class="card bg-base-200 shadow-xl">
           <div class="card-body">
-            <h3 class="card-title text-sm uppercase tracking-wide opacity-70">Recent Spans</h3>
+            <h3 class="card-title text-sm uppercase tracking-wide opacity-70">
+              Recent Spans
+            </h3>
             <div id="error-spans" class="flex flex-wrap gap-2">
               {/* Spans will be inserted here */}
             </div>
