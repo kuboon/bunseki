@@ -4,7 +4,7 @@ import esbuild from "lume/plugins/esbuild.ts";
 import jsx from "lume/plugins/jsx.ts";
 import source_maps from "lume/plugins/source_maps.ts";
 import tailwindcss from "lume/plugins/tailwindcss.ts";
-import pagefind from "lume/plugins/pagefind.ts";
+// import pagefind from "lume/plugins/pagefind.ts";
 // import { bundle } from "./_plugins/bundle.ts";
 
 const site = lume({
@@ -17,7 +17,7 @@ site.use(jsx());
 // site.use(bundle({ srcEntrypoints: ["client.ts"] }));
 site.use(tailwindcss());
 site.use(source_maps());
-site.use(pagefind());
+// site.use(pagefind());
 
 site.add("exporter.browser.ts");
 site.add("exporter.server.ts");
