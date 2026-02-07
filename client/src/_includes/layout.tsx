@@ -36,7 +36,10 @@ export default function Layout({ title, children }: LayoutProps) {
         </main>
         <footer class="footer footer-center p-4 bg-base-300 text-base-content mt-16">
           <div>
-            <p>Built with Bunseki - OTLP Telemetry Dashboard</p>
+            <p>
+              Built with <a href="https://github.com/kuboon/bunseki">Bunseki</a>
+              - OTLP Telemetry Dashboard
+            </p>
           </div>
         </footer>
       </body>
