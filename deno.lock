@@ -82,6 +82,7 @@
     "npm:prismjs@1.30.0": "1.30.0",
     "npm:remove-markdown@0.6.2": "0.6.2",
     "npm:sharp@0.34.5": "0.34.5",
+    "npm:source-map@0.7.4": "0.7.4",
     "npm:tailwindcss@4.1.17": "4.1.17",
     "npm:tailwindcss@4.1.18": "4.1.18"
   },
@@ -1418,6 +1419,9 @@
     },
     "source-map-js@1.2.1": {
       "integrity": "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="
+    },
+    "source-map@0.7.4": {
+      "integrity": "sha512-l3BikUxvPOcn5E74dZiq5BGsTb5yEwhaTSzccU6t4sDOH8NWJCstKO5QT2CvtFoK6F0saL7p9xHAqHOlCPJygA=="
     },
     "supports-preserve-symlinks-flag@1.0.0": {
       "integrity": "sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w=="

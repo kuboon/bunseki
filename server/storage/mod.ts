@@ -1,6 +1,7 @@
 // Storage layer for OTLP telemetry data using Deno KV
 
 import type { SpanType } from "@kuboon/otlp/schemas.ts";
+import { resolveStacktrace } from "../utils/sourceMap.ts";
 
 // Initialize Deno KV
 let kv: Deno.Kv;
@@ -31,6 +32,7 @@ export interface ErrorRecord {
   type: string;
   message: string;
   stacktrace: string[];
+  mappedStacktrace?: string[];
   count: number;
   firstSeen: number;
   lastSeen: number;
@@ -409,7 +411,54 @@ export async function getError(
   const kv = getKv();
   const key = keys.error(serviceName, errorHash);
   const result = await kv.get<ErrorRecord>(key);
-  return result.value;
+
+  if (!result.value) {
+    return null;
+  }
+
+  const error = result.value;
+
+  if (!error.mappedStacktrace) {
+    try {
+      const mappedStacktrace = await resolveStacktrace(error.stacktrace);
+
+      // Attempt to save the mapped stacktrace to KV (with optimistic locking)
+      let currentEntry = result;
+      for (let i = 0; i < 5; i++) {
+        // If someone else already updated it, we are good
+        if (currentEntry.value.mappedStacktrace) {
+          return currentEntry.value;
+        }
+
+        const newRecord = { ...currentEntry.value, mappedStacktrace };
+        const commitRes = await kv.atomic()
+          .check(currentEntry)
+          .set(key, newRecord)
+          .commit();
+
+        if (commitRes.ok) {
+          return newRecord;
+        }
+
+        // Reload for next attempt
+        const newResult = await kv.get<ErrorRecord>(key);
+        if (!newResult.value) {
+          // Record deleted in the meantime
+          return null;
+        }
+        currentEntry = newResult;
+      }
+
+      // If we couldn't save after retries, return the object with mapped stacktrace anyway
+      return { ...currentEntry.value, mappedStacktrace };
+    } catch (e) {
+      console.error("Failed to resolve source map:", e);
+      // Return original error without mapping if resolution fails
+      return error;
+    }
+  }
+
+  return error;
 }
 
 // === Utility: Get Dashboard Data ===
