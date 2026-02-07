@@ -1,1 +1,1 @@
-export * from "../otlp/exporter/mod.ts";
+export * from "../otlp/exporter/server.ts";

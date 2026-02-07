@@ -66,6 +66,10 @@ export function toKeyValue(key: string, value: AttributePrimitive) {
   return { key, value: toAttributeValue(value) };
 }
 
+export function toAttributes(attrs: Record<string, AttributePrimitive>) {
+  return Object.entries(attrs).map(([key, value]) => toKeyValue(key, value));
+}
+
 export function toUnixNano(timeMs: number): string {
   return String(BigInt(timeMs) * BigInt(1e6));
 }

@@ -47,7 +47,7 @@ Endpoint base: `https://your.domain/otlp/`
 import { OtlpExporter } from "https://bunseki.kbn.one/exporter.browser.js";
 
 const otlp = new OtlpExporter({ serviceName: "o.kbn.one" });
-let span = otlp.onPageLoad();
+let span = await otlp.onPageLoad();
 globalThis.addEventListener("error", (ev) => {
   span.postError(ev.error);
 });
@@ -58,10 +58,29 @@ document.addEventListener("visibilitychange", () => {
     span = span.trace.newSpan({ name: "page-visible" });
   }
 });
+
+// appends `traceparent` header, creats fetch span, post on error
+await span.fetch("/api/on-server", {
+  headers: { traceparent: span.traceparent },
+});
 ```
 
-- CORS enabled for browser usage
-- No authentication required
+### On server
+
+```ts
+import { OtlpExporter } from "https://bunseki.kbn.one/exporter.server.js";
+
+const otlp = new OtlpExporter({ serviceName: "o.kbn.one" });
+
+export default {
+  fetch(request) {
+    const span = otlp.onRequest(request);
+    // do process
+    await span.post();
+    return new Response("hello");
+  },
+} satisfies Deno.ServeDefaultExport;
+```
 
 ## License
 

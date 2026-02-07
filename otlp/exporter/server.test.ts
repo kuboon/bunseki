@@ -1,6 +1,6 @@
 // index.test.ts
 import collector from "../collector/mod.ts";
-import { OtlpExporter } from "../exporter/mod.ts";
+import { OtlpExporter } from "./server.ts";
 import { initStorage } from "../../storage/mod.ts";
 
 import { testClient } from "@hono/hono/testing";
@@ -14,14 +14,6 @@ const exporter = new OtlpExporter({
 exporter.client = testClient(collector);
 await initStorage(":memory:");
 
-describe("onPageLoad", () => {
-  it("generates page_load span", async () => {
-    const span = await exporter.onPageLoad(new URL("http://localhost/page"));
-    await span.postError(new Error("Test error"));
-    expect(span.name).toBe("page_load");
-    // console.log(JSON.stringify(span.trace, null, 2));
-  });
-});
 describe("onRequest", () => {
   it("generates http_request span", async () => {
     const req = new Request("http://localhost/test", {
@@ -31,8 +23,9 @@ describe("onRequest", () => {
       },
     });
     const span = exporter.onRequest(req);
-    const res = await span.postError(new Error("Test error"));
-    console.log("Response:", await res.json());
+    const result = await span.postError(new Error("Test error"));
+    if (!result.ok) throw result.error;
+    console.log("Response:", await result.response.json());
     expect(span.name).toBe("http_request");
     // console.log(JSON.stringify(span.trace, null, 2));
   });

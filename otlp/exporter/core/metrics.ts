@@ -1,6 +1,6 @@
-import { toKeyValue, toUnixNano } from "../protojson.ts";
-import { metricsRequestSchema } from "../schemas.ts";
-import { dateNow, ExporterConfig } from "./utils.ts";
+import { toAttributes, toUnixNano } from "../../protojson.ts";
+import { metricsRequestSchema } from "../../schemas.ts";
+import { dateNow, ExporterConfig } from "../utils.ts";
 
 export async function sendPVMetric(exporter: ExporterConfig, path: string) {
   const now = dateNow();
@@ -28,9 +28,9 @@ export async function sendPVMetric(exporter: ExporterConfig, path: string) {
                 sum: {
                   dataPoints: [
                     {
-                      attributes: [
-                        toKeyValue("url.path", path),
-                      ],
+                      attributes: toAttributes({
+                        "url.path": path,
+                      }),
                       startTimeUnixNano: timeUnixNano,
                       timeUnixNano: timeUnixNano,
                       asInt: "1",
@@ -85,13 +85,13 @@ export function sendRedirectMetric(
                   isMonotonic: true,
                   dataPoints: [
                     {
-                      attributes: [
-                        toKeyValue("http.request.method", "GET"),
-                        toKeyValue("url.path", oldPath),
-                        toKeyValue("http.route", route ?? oldPath),
-                        toKeyValue("http.response.status_code", statusCode),
-                        toKeyValue("http.redirected_to", newPath),
-                      ],
+                      attributes: toAttributes({
+                        "http.request.method": "GET",
+                        "url.path": oldPath,
+                        "http.route": route ?? oldPath,
+                        "http.response.status_code": statusCode,
+                        "http.redirected_to": newPath,
+                      }),
                       startTimeUnixNano: timeUnixNano,
                       timeUnixNano: timeUnixNano,
                       asInt: "1",
@@ -107,7 +107,7 @@ export function sendRedirectMetric(
   } satisfies typeof metricsRequestSchema.infer;
 
   // Send metric asynchronously (fire and forget)
-  exporter.client.v1.metrics.$post({ json: metric }).catch((err) => {
+  return exporter.client.v1.metrics.$post({ json: metric }).catch((err) => {
     console.error("Failed to send Redirect metric:", err);
   });
 }
