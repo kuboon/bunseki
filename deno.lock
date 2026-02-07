@@ -9,6 +9,7 @@
     "jsr:@standard-schema/spec@1": "1.0.0",
     "jsr:@std/assert@^1.0.14": "1.0.18",
     "jsr:@std/assert@^1.0.17": "1.0.18",
+    "jsr:@std/async@^1.1.0": "1.1.1",
     "jsr:@std/cli@1.0.24": "1.0.24",
     "jsr:@std/cli@1.0.25": "1.0.25",
     "jsr:@std/cli@^1.0.24": "1.0.24",
@@ -56,6 +57,7 @@
     "npm:@mdit/plugin-alert@0.12.0": "0.12.0_markdown-it@14.1.0",
     "npm:@mdit/plugin-alert@0.22.2": "0.22.2_markdown-it@14.1.0",
     "npm:@phosphor-icons/core@2.1.1": "2.1.1",
+    "npm:@remix-run/component@0.4": "0.4.0",
     "npm:@resvg/resvg-wasm@2.6.2": "2.6.2",
     "npm:@tailwindcss/node@4.1.17": "4.1.17",
     "npm:@tailwindcss/node@4.1.18": "4.1.18",
@@ -108,6 +110,9 @@
       "dependencies": [
         "jsr:@std/internal@^1.0.12"
       ]
+    },
+    "@std/async@1.1.1": {
+      "integrity": "8a79beb3378cc229ce65ba2c746cfd03e4855ddd891d1eb6b9e32128e0d5339c"
     },
     "@std/cli@1.0.24": {
       "integrity": "b655a5beb26aa94f98add6bc8889f5fb9bc3ee2cc3fc954e151201f4c4200a5e",
@@ -245,6 +250,7 @@
       "integrity": "87bdc2700fa98249d48a17cd72413352d3d3680dcfbdb64947fd0982d6bbf681",
       "dependencies": [
         "jsr:@std/assert@^1.0.17",
+        "jsr:@std/async",
         "jsr:@std/data-structures",
         "jsr:@std/fs@^1.0.22",
         "jsr:@std/internal@^1.0.12",
@@ -787,6 +793,15 @@
     },
     "@phosphor-icons/core@2.1.1": {
       "integrity": "sha512-v4ARvrip4qBCImOE5rmPUylOEK4iiED9ZyKjcvzuezqMaiRASCHKcRIuvvxL/twvLpkfnEODCOJp5dM4eZilxQ=="
+    },
+    "@remix-run/component@0.4.0": {
+      "integrity": "sha512-5xJLIrlH1Tcx6+h+ZG6BEpNkpt8upK4l82exE107Elw2QyToHf69v1aGlaTPQ8fpGr6Ke7gHta7s3fypJwaIsg==",
+      "dependencies": [
+        "@remix-run/interaction"
+      ]
+    },
+    "@remix-run/interaction@0.5.0": {
+      "integrity": "sha512-Z2ja9/7TfMHt/wzWq425GI2xj6QxW4E3OHZ8In81uytZKIuWaI6Pn3v8qyMrInwnBEaLcfcbeQVCiExgHU8D4A=="
     },
     "@resvg/resvg-wasm@2.6.2": {
       "integrity": "sha512-FqALmHI8D4o6lk/LRWDnhw95z5eO+eAa6ORjVg09YRR7BkcM6oPHU9uyC0gtQG5vpFLvgpeU4+zEAz2H8APHNw=="
@@ -2149,7 +2164,8 @@
     "members": {
       "client": {
         "dependencies": [
-          "jsr:@std/path@^1.1.4"
+          "jsr:@std/path@^1.1.4",
+          "npm:@remix-run/component@0.4"
         ]
       }
     }
