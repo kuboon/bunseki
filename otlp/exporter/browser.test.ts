@@ -1,18 +1,20 @@
 // index.test.ts
-import collector from "../collector/mod.ts";
+import { createCollectorRouter } from "../collector/mod.ts";
+import { InMemoryStorage } from "../storage/memory.ts";
 import { OtlpExporter } from "./browser.ts";
-import { initStorage } from "../../storage/mod.ts";
 
 import { testClient } from "@hono/hono/testing";
 import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
+
+const storage = new InMemoryStorage();
+const collector = createCollectorRouter(storage);
 
 const exporter = new OtlpExporter({
   serviceName: "test-service",
   endpoint: "http://localhost:4318",
 });
 exporter.client = testClient(collector);
-await initStorage(":memory:");
 
 describe("onPageLoad", () => {
   it("generates page_load span", async () => {

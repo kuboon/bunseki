@@ -7,7 +7,9 @@ import tailwindcss from "lume/plugins/tailwindcss.ts";
 import pagefind from "lume/plugins/pagefind.ts";
 // import { bundle } from "./_plugins/bundle.ts";
 
-const site = lume();
+const site = lume({
+  src: "./src",
+});
 
 site.use(date());
 site.use(esbuild());

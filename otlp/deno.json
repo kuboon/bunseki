@@ -2,7 +2,9 @@
   "name": "@kuboon/otlp",
   "version": "0.1.0",
   "exports": {
-    "./collector": "./collector/mod.ts",
-    "./exporter": "./exporter/mod.ts"
+    "./collector.ts": "./collector/mod.ts",
+    "./exporter.ts": "./exporter/mod.ts",
+    "./schemas.ts": "./schemas.ts",
+    "./storage.ts": "./storage.ts"
   }
 }

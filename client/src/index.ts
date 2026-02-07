@@ -1,6 +1,6 @@
 // Client-side code for index page
+import type { DashboardApiType } from "@scope/server/dashboard";
 import { hc } from "@hono/hono/client";
-import type { DashboardApiType } from "../api/dashboard.ts";
 
 // Create typed client
 const client = hc<DashboardApiType>("/");

@@ -1,15 +1,18 @@
-import otlpRouter from "@kuboon/otlp/collector";
 import dashboardApiRouter from "./api/dashboard.ts";
 // import kvAdminRouter from "@kuboon/kvAdmin";
-import { ALLOWED_DOMAINS } from "./types.ts";
-import { initStorage } from "./storage/mod.ts";
+import { ALLOWED_DOMAINS } from "../types.ts";
+import { createOtlpStorageAdapter, initStorage } from "./storage/mod.ts";
 import { serveDynamicStatic } from "./utils/dynamicServeStatic.ts";
 
+import { createCollectorRouter } from "@kuboon/otlp/collector.ts";
 import { Hono } from "@hono/hono";
 import { cors } from "@hono/hono/cors";
 
 // Initialize storage on startup
 await initStorage();
+
+// Create OTLP collector router with KV storage adapter
+const otlpRouter = createCollectorRouter(createOtlpStorageAdapter());
 
 const app = new Hono();
 
@@ -61,7 +64,7 @@ app.route("/", dashboardApiRouter);
 
 // Serve static files from Lume build output with dynamic parameter resolution
 // This automatically resolves paths like /dashboard/:serviceName/index.js
-app.get("*", serveDynamicStatic({ root: "./client/_site" }));
+app.get("*", serveDynamicStatic({ root: "../client/_site" }));
 
 export default {
   fetch: app.fetch.bind(app),

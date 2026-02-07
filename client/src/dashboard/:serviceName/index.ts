@@ -1,6 +1,6 @@
 // Client-side code for service dashboard page
 import { hc, InferResponseType } from "@hono/hono/client";
-import type { DashboardApiType } from "../../../api/dashboard.ts";
+import type { DashboardApiType } from "@scope/server/dashboard";
 
 // Create typed client
 const client = hc<DashboardApiType>("/").api.dashboard[":serviceName"];
