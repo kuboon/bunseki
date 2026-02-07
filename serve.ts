@@ -3,9 +3,9 @@ import dashboardApiRouter from "./api/dashboard.ts";
 // import kvAdminRouter from "@kuboon/kvAdmin";
 import { ALLOWED_DOMAINS } from "./types.ts";
 import { initStorage } from "./storage/mod.ts";
+import { serveDynamicStatic } from "./utils/dynamicServeStatic.ts";
 
 import { Hono } from "@hono/hono";
-import { serveStatic } from "@hono/hono/deno";
 import { cors } from "@hono/hono/cors";
 
 // Initialize storage on startup
@@ -59,21 +59,9 @@ app.route("/otlp", otlpRouter);
 app.route("/", dashboardApiRouter);
 // app.route("/api/kvadmin", kvAdminRouter);
 
-// Serve specific error pages for dashboard
-app.get("/dashboard/:serviceName/error/:errorHash", async (c) => {
-  const { serviceName } = c.req.param();
-  try {
-    const content = await Deno.readTextFile(
-      `./client/_site/dashboard/${serviceName}/error.html`,
-    );
-    return c.html(content);
-  } catch {
-    return c.text("Not Found", 404);
-  }
-});
-
-// Serve static files from Lume build output
-app.get("*", serveStatic({ root: "./client/_site" }));
+// Serve static files from Lume build output with dynamic parameter resolution
+// This automatically resolves paths like /dashboard/:serviceName/index.js
+app.get("*", serveDynamicStatic({ root: "./client/_site" }));
 
 export default {
   fetch: app.fetch.bind(app),

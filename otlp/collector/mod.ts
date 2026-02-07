@@ -3,10 +3,10 @@ import {
   metricsRequestSchema,
   tracesRequestSchema,
 } from "../schemas.ts";
+import { incrementCounter, storeError, storeSpan } from "../../storage/mod.ts";
 
 import { Hono } from "@hono/hono";
 import { sValidator } from "@hono/standard-validator";
-import { incrementCounter, storeError, storeSpan } from "../../storage/mod.ts";
 
 // Helper to extract service name from resource attributes
 function getServiceName(

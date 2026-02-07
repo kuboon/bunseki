@@ -1,7 +1,12 @@
 import { type } from "arktype";
 import { Hono } from "@hono/hono";
 import { sValidator } from "@hono/standard-validator";
-import { getDashboardData, getError, initStorage } from "../storage/mod.ts";
+import {
+  getDashboardData,
+  getError,
+  initStorage,
+  listServices,
+} from "../storage/mod.ts";
 
 // Initialize storage
 await initStorage();
@@ -17,6 +22,15 @@ const errorParamSchema = type({
 });
 
 const router = new Hono().basePath("/api/dashboard")
+  .get("/services", async (c) => {
+    try {
+      const services = await listServices();
+      return c.json(services);
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      return c.json({ error: "Failed to fetch services" }, 500);
+    }
+  })
   .get(
     "/:serviceName",
     sValidator("param", serviceNameParamSchema),

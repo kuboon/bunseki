@@ -19,7 +19,9 @@ site.use(pagefind());
 
 site.add("exporter.browser.ts");
 site.add("exporter.server.ts");
+site.add("index.ts");
+site.add("dashboard/:serviceName/index.ts");
+site.add("dashboard/:serviceName/error/error.ts");
 site.add("styles");
-site.add("dashboard/error.ts");
 
 export default site;

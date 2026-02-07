@@ -13,6 +13,10 @@ export default function Layout({ title, children }: LayoutProps) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title}</title>
         <link href="/styles/styles.css" rel="stylesheet" />
+        <link
+          rel="icon"
+          href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>📊</text></svg>"
+        />
       </head>
       <body>
         <div class="navbar bg-base-100 shadow-lg">

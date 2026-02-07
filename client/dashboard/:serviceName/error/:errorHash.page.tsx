@@ -1,22 +1,6 @@
 export const layout = "layout.tsx";
-import { services } from "../_data.ts";
 
-// Generate error page for each service
-export default function* () {
-  for (const serviceName of services) {
-    yield {
-      url: `/dashboard/${serviceName}/error.html`,
-      title: `${serviceName} - Error Details`,
-      content: <ServiceErrorPage serviceName={serviceName} />,
-    };
-  }
-}
-
-interface ServiceErrorPageProps {
-  serviceName: string;
-}
-
-function ServiceErrorPage({ serviceName }: ServiceErrorPageProps) {
+export default function ServiceErrorPage() {
   return (
     <div>
       <div class="breadcrumbs text-sm mb-4">
@@ -25,7 +9,9 @@ function ServiceErrorPage({ serviceName }: ServiceErrorPageProps) {
             <a href="/">Services</a>
           </li>
           <li>
-            <a href={`/dashboard/${serviceName}/`}>{serviceName}</a>
+            <a id="breadcrumb-service-link" href="#">
+              <span id="breadcrumb-service-name"></span>
+            </a>
           </li>
           <li>Error Details</li>
         </ul>
@@ -94,7 +80,7 @@ function ServiceErrorPage({ serviceName }: ServiceErrorPageProps) {
       </div>
 
       {/* External script */}
-      <script src="/dashboard/error.js"></script>
+      <script src="error.js"></script>
     </div>
   );
 }
