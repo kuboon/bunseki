@@ -1,4 +1,4 @@
-import { resolveStacktrace } from "./sourceMap.ts";
+import { resolveStacktrace } from "./source-map.ts";
 import { expect } from "@std/expect";
 
 Deno.test("resolveStacktrace - maps correctly", async () => {

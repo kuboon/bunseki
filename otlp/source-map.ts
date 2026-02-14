@@ -74,7 +74,7 @@ export async function resolveStacktrace(
         // @ts-ignore: SourceMapConsumer constructor returns a Promise in 0.7.x
         const consumer = await new SourceMapConsumer(mapJson);
         consumers.set(url, consumer);
-    } catch (_e) {
+      } catch (_e) {
         // Fail silently for this URL, just log to debug if needed
         // console.warn(`Error loading source map for ${url}:`, e);
       }

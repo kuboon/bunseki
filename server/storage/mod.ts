@@ -1,7 +1,7 @@
 // Storage layer for OTLP telemetry data using Deno KV
 
 import type { SpanType } from "@kuboon/otlp/schemas.ts";
-import { resolveStacktrace } from "../utils/sourceMap.ts";
+import { resolveStacktrace } from "@kuboon/otlp/source-map.ts";
 
 // Initialize Deno KV
 let kv: Deno.Kv;
