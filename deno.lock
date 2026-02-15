@@ -56,6 +56,7 @@
     "npm:@hono/cli@*": "0.1.10_hono@4.11.8",
     "npm:@mdit/plugin-alert@0.12.0": "0.12.0_markdown-it@14.1.0",
     "npm:@mdit/plugin-alert@0.22.2": "0.22.2_markdown-it@14.1.0",
+    "npm:@opentelemetry/api@^1.9.0": "1.9.0",
     "npm:@phosphor-icons/core@2.1.1": "2.1.1",
     "npm:@remix-run/component@0.4": "0.4.0",
     "npm:@resvg/resvg-wasm@2.6.2": "2.6.2",
@@ -760,6 +761,9 @@
       "optionalPeers": [
         "markdown-it"
       ]
+    },
+    "@opentelemetry/api@1.9.0": {
+      "integrity": "sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg=="
     },
     "@pagefind/darwin-arm64@1.4.0": {
       "integrity": "sha512-2vMqkbv3lbx1Awea90gTaBsvpzgRs7MuSgKDxW0m9oV1GPZCZbZBJg/qL83GIUEN2BFlY46dtUZi54pwH+/pTQ==",
@@ -2166,6 +2170,11 @@
         "dependencies": [
           "jsr:@std/path@^1.1.4",
           "npm:@remix-run/component@0.4"
+        ]
+      },
+      "otlp": {
+        "dependencies": [
+          "npm:@opentelemetry/api@^1.9.0"
         ]
       }
     }

@@ -1,10 +1,11 @@
 import { SpanKind } from "../schemas.ts";
 import { sendRedirectMetric } from "./core/metrics.ts";
+import type { SpanObj } from "./core/trace.ts";
 
 import { OtlpExporterBase } from "./core/mod.ts";
 
 export class OtlpExporter extends OtlpExporterBase {
-  onRequest(req: Request) {
+  onRequest(req: Request): SpanObj {
     const spanKind = SpanKind.SERVER;
     const traceparent = req.headers.get("traceparent");
     let [, traceId, parentSpanId, flags]: (string | undefined)[] =

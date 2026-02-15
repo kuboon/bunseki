@@ -5,7 +5,10 @@ import { OtlpExporterBase } from "./core/mod.ts";
 
 export class OtlpExporter extends OtlpExporterBase {
   /// for Client
-  async onPageLoad(location = new URL(globalThis.location.href)) {
+  async onPageLoad(location: URL | string = new URL(globalThis.location.href)) {
+    if (typeof location === "string") {
+      location = new URL(location);
+    }
     const spanKind = SpanKind.CLIENT;
     const trace = this.newTrace({ spanKind });
     const span = trace.newSpan({ name: "page_load" });

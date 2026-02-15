@@ -15,7 +15,7 @@ import { dateNow, ExporterConfig } from "../utils.ts";
 const randomBytes = (length: number) =>
   crypto.getRandomValues(new Uint8Array(length));
 const generateTraceId = () => bytesToHex(randomBytes(16));
-const generateSpanId = () => bytesToHex(randomBytes(8));
+const generateSpanId: () => string = () => bytesToHex(randomBytes(8));
 const unixNanoString = (now = dateNow()) => toUnixNano(now);
 const isPromise = (obj: unknown): obj is Promise<unknown> =>
   typeof obj === "object" && obj !== null && "finally" in obj &&
@@ -89,7 +89,7 @@ class Span {
   readonly name: string;
   readonly startAt = dateNow();
   endAt: number | null = null;
-  readonly spanId = generateSpanId();
+  readonly spanId: string = generateSpanId();
   readonly parentSpanId?: string;
   readonly attributes: Record<string, AttributePrimitive> = {};
   readonly events: SpanEventType[] = [];
@@ -108,11 +108,11 @@ class Span {
   child(name: string): Span {
     return this.trace.newSpan({ name, parentSpanId: this.spanId });
   }
-  inSpan<T>(name: string, fn: (span: Span) => T | Promise<T>): T | Promise<T> {
+  inSpan<T>(name: string, fn: (span: Span) => T): T {
     const span = this.child(name);
     const ret = fn(span);
     if (isPromise(ret)) {
-      return ret.finally(() => span.end()) as Promise<T>;
+      return ret.finally(() => span.end()) as T;
     }
     span.end();
     return ret;
@@ -145,7 +145,7 @@ class Span {
       },
     });
   }
-  toJSON() {
+  toJSON(): SpanType {
     const attributes = toAttributes(this.attributes);
     this.endAt = this.endAt || dateNow();
     return {
@@ -160,23 +160,26 @@ class Span {
       events: this.events,
     } satisfies SpanType;
   }
-  async post() {
-    return await this.trace.post();
+  post() {
+    return this.trace.post();
   }
-  async postError(error: Error) {
+  postError(error: Error) {
     this.addErrorEvent(error);
-    return await this.post();
+    return this.post();
   }
   // no need to do `.bind(span)`
-  get fetch() {
-    return (input: RequestInfo, init: RequestInit = {}) => {
-      return this.inSpan("fetch", (span) => {
-        span.addAttribute(
-          "http.url",
-          typeof input === "string" ? input : input.url,
-        );
-        span.addAttribute("http.method", init.method || "GET");
-        const headers = new Headers(init.headers);
+  get fetch(): typeof fetch {
+    return (input, init: RequestInit | undefined) => {
+      init ??= {};
+      const reqUrl = typeof input === "string"
+        ? input
+        : input instanceof URL
+        ? input.href
+        : input.url;
+      const res: Promise<Response> = this.inSpan("fetch", (span) => {
+        span.addAttribute("http.url", reqUrl);
+        span.addAttribute("http.method", init?.method || "GET");
+        const headers = new Headers(init.headers || {});
         headers.set("traceparent", this.traceparent);
         init.headers = headers;
         const start = performance.now();
@@ -187,12 +190,13 @@ class Span {
             performance.now() - start,
           );
           return response;
-        }).catch((error) => {
-          span.postError(error).then(() => {
-            throw error;
-          });
+        }).catch(async (error) => {
+          await span.postError(error);
+          throw error;
         });
       });
+      return res;
     };
   }
 }
+export type SpanObj = Span;

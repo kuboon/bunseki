@@ -6,7 +6,7 @@
   "tasks": {
     "dev": "deno serve -P=serve --watch serve.ts",
     "serve": "deno serve -P=serve serve.ts",
-    "generate-dummy": "deno run -P=serve --env otlp/test/generateDummyData.ts"
+    "generate-dummy": "deno run storage/generateDummyData.ts"
   },
   "permissions": {
     "serve": {
