@@ -1,5 +1,5 @@
+import { serveDynamicStatic } from "./serveDynamicStatic.ts";
 import { Hono } from "@hono/hono";
-import { serveDynamicStatic } from "./dynamicServeStatic.ts";
 import { expect } from "@std/expect";
 import { existsSync } from "@std/fs";
 

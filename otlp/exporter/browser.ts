@@ -1,13 +1,13 @@
-import { SpanKind } from "../schemas.ts";
+import { SpanKind } from "./types.ts";
 import { sendPVMetric } from "./core/metrics.ts";
 
-import { OtlpExporterBase, type SpanObj } from "./core/mod.ts";
+import { OtlpExporterBase, type Span } from "./core/mod.ts";
 
 export class OtlpExporter extends OtlpExporterBase {
   /// for Client
   async onPageLoad(
     location: URL | string = new URL(globalThis.location.href),
-  ): Promise<SpanObj> {
+  ): Promise<Span> {
     if (typeof location === "string") {
       location = new URL(location);
     }

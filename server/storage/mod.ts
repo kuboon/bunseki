@@ -1,6 +1,6 @@
 // Storage layer for OTLP telemetry data using Deno KV
 
-import type { SpanEventType, SpanType } from "@kuboon/otlp/schemas.ts";
+import type { SpanEventType, SpanType } from "../../otlp/collector/schemas.ts";
 import { resolveStacktrace } from "@kuboon/otlp/source-map.ts";
 
 // Initialize Deno KV
@@ -525,7 +525,7 @@ export async function getDashboardData(
 
 // === OTLP Storage Adapter ===
 
-import type { OtlpStorage } from "@kuboon/otlp/storage.ts";
+import type { OtlpStorage } from "@kuboon/otlp/collector.ts";
 
 /**
  * Create an OtlpStorage adapter for the KV storage

@@ -1,15 +1,10 @@
 import {
-  SpanEventType,
-  SpanKind,
-  SpanType,
-  tracesRequestSchema,
-} from "../../schemas.ts";
-import {
   AttributePrimitive,
   bytesToHex,
   toAttributes,
   toUnixNano,
 } from "../../protojson.ts";
+import { SpanEventType, SpanKind, SpanType, TracesRequest } from "../types.ts";
 import { dateNow, ExporterConfig } from "../utils.ts";
 
 const randomBytes = (length: number) =>
@@ -26,11 +21,11 @@ export type TraceOpts = {
   spanKind?: number;
 };
 
-export class TraceObj {
+export class Trace {
   readonly traceId: string;
   readonly parentSpanId?: string;
   readonly spanKind: number;
-  spans: SpanObj[] = [];
+  spans: Span[] = [];
 
   constructor(
     private exporter: ExporterConfig,
@@ -39,8 +34,8 @@ export class TraceObj {
     this.traceId = opts.traceId || generateTraceId();
     this.spanKind = opts.spanKind || SpanKind.INTERNAL;
   }
-  newSpan(opts: SpanOpts): SpanObj {
-    const span = new SpanObj(this, opts);
+  newSpan(opts: SpanOpts): Span {
+    const span = new Span(this, opts);
     this.spans.push(span);
     return span;
   }
@@ -64,7 +59,7 @@ export class TraceObj {
           ],
         },
       ],
-    } satisfies typeof tracesRequestSchema.infer;
+    } satisfies TracesRequest;
   }
   async post() {
     try {
@@ -85,7 +80,7 @@ type SpanOpts = {
   parentSpanId?: string;
 };
 
-class SpanObj {
+class Span {
   readonly name: string;
   readonly startAt = dateNow();
   endAt: number | null = null;
@@ -95,7 +90,7 @@ class SpanObj {
   readonly events: SpanEventType[] = [];
   status?: { code: number; message?: string };
   posted = false;
-  constructor(public trace: TraceObj, opts: SpanOpts) {
+  constructor(public trace: Trace, opts: SpanOpts) {
     this.name = opts.name;
     this.parentSpanId = opts.parentSpanId;
   }
@@ -105,12 +100,12 @@ class SpanObj {
   get traceparent() {
     return `00-${this.trace.traceId}-${this.spanId}-01`;
   }
-  child(name: string): SpanObj {
+  child(name: string): Span {
     return this.trace.newSpan({ name, parentSpanId: this.spanId });
   }
   inSpan<T>(
     name: string,
-    fn: (span: SpanObj) => T | Promise<T>,
+    fn: (span: Span) => T | Promise<T>,
   ): T | Promise<T> {
     const span = this.child(name);
     const ret = fn(span);
@@ -148,7 +143,7 @@ class SpanObj {
       },
     });
   }
-  toJSON() {
+  toJSON(): SpanType {
     this.endAt ||= dateNow();
     const attributes = toAttributes(this.attributes);
     return {
@@ -203,4 +198,4 @@ class SpanObj {
     };
   }
 }
-export type { SpanObj };
+export type { Span };

@@ -1,7 +1,7 @@
 // In-memory storage implementation for testing and development
 // This is a simple implementation without persistence
 
-import type { OtlpStorage } from "../storage.ts";
+import type { OtlpStorage } from "./types.ts";
 import type { SpanEventType, SpanType } from "../schemas.ts";
 
 /**

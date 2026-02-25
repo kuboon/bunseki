@@ -1,7 +1,7 @@
 // Storage interface for OTLP collector
 // This allows the collector to be independent of the storage implementation
 
-import type { SpanEventType, SpanType } from "./schemas.ts";
+import type { SpanEventType, SpanType } from "../schemas.ts";
 
 /**
  * Storage interface for OTLP telemetry data

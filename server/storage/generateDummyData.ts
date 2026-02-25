@@ -1,7 +1,7 @@
 // generateDummyData.ts
 // ダミーデータ生成スクリプト
 import { incrementCounter, initStorage, storeEvent, storeSpan } from "./mod.ts";
-import type { SpanType } from "@kuboon/otlp/schemas.ts";
+import type { SpanType } from "../../otlp/collector/schemas.ts";
 
 const SERVICE_NAME = "o.kbn.one";
 

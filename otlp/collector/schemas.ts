@@ -41,16 +41,8 @@ const SpanLink = type({
   "droppedAttributesCount?": "number",
 });
 
-export const SpanKind = {
-  INTERNAL: 1,
-  SERVER: 2,
-  CLIENT: 3,
-  PRODUCER: 4,
-  CONSUMER: 5,
-} as const;
-
 // Span
-const Span = type({
+const SpanSchema = type({
   traceId: "string",
   spanId: "string",
   "traceState?": "string",
@@ -70,7 +62,7 @@ const Span = type({
     "message?": "string",
   },
 });
-export type SpanType = typeof Span.infer;
+export type SpanType = typeof SpanSchema.infer;
 
 // Span scope spans
 const ScopeSpans = type({
@@ -79,7 +71,7 @@ const ScopeSpans = type({
     "version?": "string",
     "attributes?": KeyValue.array(),
   },
-  spans: Span.array(),
+  spans: SpanSchema.array(),
   "schemaUrl?": "string",
 });
 

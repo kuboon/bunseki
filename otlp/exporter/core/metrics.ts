@@ -1,6 +1,6 @@
 import { toAttributes, toUnixNano } from "../../protojson.ts";
-import { metricsRequestSchema } from "../../schemas.ts";
 import { dateNow, ExporterConfig } from "../utils.ts";
+import { MetricsRequest } from "../types.ts";
 
 export async function sendPVMetric(exporter: ExporterConfig, path: string) {
   const now = dateNow();
@@ -45,7 +45,7 @@ export async function sendPVMetric(exporter: ExporterConfig, path: string) {
         ],
       },
     ],
-  } satisfies typeof metricsRequestSchema.infer;
+  } satisfies MetricsRequest;
 
   // Send metric asynchronously (fire and forget)
   await exporter.client.v1.metrics.$post({ json: metric }).catch((err) => {
@@ -104,7 +104,7 @@ export function sendRedirectMetric(
         ],
       },
     ],
-  } satisfies typeof metricsRequestSchema.infer;
+  } satisfies MetricsRequest;
 
   // Send metric asynchronously (fire and forget)
   return exporter.client.v1.metrics.$post({ json: metric }).catch((err) => {

@@ -1,6 +1,6 @@
 // index.test.ts
-import { createCollectorRouter } from "../collector/mod.ts";
-import { InMemoryStorage } from "../storage/memory.ts";
+import { createCollectorRouter } from "../collector/router.ts";
+import { InMemoryStorage } from "../collector/storage/memory.ts";
 import { OtlpExporter } from "./server.ts";
 
 import { testClient } from "@hono/hono/testing";

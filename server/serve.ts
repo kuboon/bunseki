@@ -2,9 +2,9 @@ import dashboardApiRouter from "./api/dashboard.ts";
 // import kvAdminRouter from "@kuboon/kvAdmin";
 import { ALLOWED_DOMAINS } from "../types.ts";
 import { createOtlpStorageAdapter, initStorage } from "./storage/mod.ts";
-import { serveDynamicStatic } from "./utils/dynamicServeStatic.ts";
+import { serveDynamicStatic } from "./utils/serveDynamicStatic.ts";
 
-import { createCollectorRouter } from "@kuboon/otlp/collector.ts";
+import { createCollectorRouter } from "../otlp/collector/router.ts";
 import { Hono } from "@hono/hono";
 import { cors } from "@hono/hono/cors";
 

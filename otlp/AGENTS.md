@@ -1,1 +1,2 @@
-https://github.com/open-telemetry/opentelemetry-js/tree/main/api
+- https://github.com/open-telemetry/opentelemetry-js/tree/main/api
+- https://opentelemetry.io/docs/specs/otlp/#otlphttp
