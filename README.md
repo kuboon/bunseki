@@ -22,14 +22,12 @@ This project includes a devcontainer configuration for easy development with Den
 ### Running the Server
 
 ```bash
-# Development mode with auto-reload
+# serve
+deno task serve
+
+# with watch
 deno task dev
-
-# Production mode
-deno serve -A serve.ts
 ```
-
-The server runs on port 8000 by default (configurable via `PORT` environment variable).
 
 ## OTLP Collector Endpoints
 
@@ -44,7 +42,7 @@ Endpoint base: `https://your.domain/otlp/`
 ### On browser
 
 ```ts
-import { OtlpExporter } from "https://bunseki.kbn.one/exporter.browser.js";
+import { OtlpExporter } from "https://jsr.io/@kuboon/otlp/exporter/browser.ts";
 
 const otlp = new OtlpExporter({ serviceName: "o.kbn.one" });
 let span = await otlp.onPageLoad();
@@ -68,7 +66,7 @@ await span.fetch("/api/on-server", {
 ### On server
 
 ```ts
-import { OtlpExporter } from "https://bunseki.kbn.one/exporter.server.js";
+import { OtlpExporter } from "https://jsr.io/@kuboon/otlp/exporter/server.ts";
 
 const otlp = new OtlpExporter({ serviceName: "o.kbn.one" });
 

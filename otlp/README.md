@@ -5,8 +5,10 @@
 ### collector
 
 ```ts
-import { createCollectorRouter } from "jsr:@kuboon/otlp/collector.ts";
-import type { OtlpStorage } from "jsr:@kuboon/otlp/storage.ts";
+import {
+  createCollectorRouter,
+  type OtlpStorage,
+} from "jsr:@kuboon/otlp/collector.ts";
 
 const storage: OtlpStorage = {
   async storeSpan(serviceName, span) {
@@ -27,7 +29,7 @@ const storage: OtlpStorage = {
 };
 
 const app = createCollectorRouter(storage);
-// POST /v1/traces, /v1/metrics, /v1/logs
+// POST /v1/traces, /v1/metrics
 Deno.serve((req) => app.fetch(req));
 ```
 

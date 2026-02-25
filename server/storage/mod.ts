@@ -1,7 +1,6 @@
 // Storage layer for OTLP telemetry data using Deno KV
 
 import type { SpanEventType, SpanType } from "../../otlp/collector/schemas.ts";
-import { resolveStacktrace } from "@kuboon/otlp/source-map.ts";
 
 // Initialize Deno KV
 let kv: Deno.Kv;
@@ -435,7 +434,7 @@ export async function getError(
 
   if (!error.mappedStacktrace) {
     try {
-      const mappedStacktrace = await resolveStacktrace(error.stacktrace);
+      const mappedStacktrace = await (error.stacktrace);
 
       // Attempt to save the mapped stacktrace to KV (with optimistic locking)
       let currentEntry = result;
