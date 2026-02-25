@@ -183,10 +183,4 @@ export function createCollectorRouter(storage: OtlpStorage) {
     );
 }
 
-const router = createCollectorRouter({
-  storeSpan: async () => {},
-  storeError: async () => {},
-  incrementCounter: async () => {},
-});
-export type AppType = typeof router;
-export default router;
+export type AppType = ReturnType<typeof createCollectorRouter>;

@@ -15,7 +15,7 @@ import { dateNow, ExporterConfig } from "../utils.ts";
 const randomBytes = (length: number) =>
   crypto.getRandomValues(new Uint8Array(length));
 const generateTraceId = () => bytesToHex(randomBytes(16));
-const generateSpanId = () => bytesToHex(randomBytes(8));
+const generateSpanId: () => string = () => bytesToHex(randomBytes(8));
 const unixNanoString = (now = dateNow()) => toUnixNano(now);
 const isPromise = (obj: unknown): obj is Promise<unknown> =>
   typeof obj === "object" && obj !== null && "finally" in obj &&
@@ -89,7 +89,7 @@ class SpanObj {
   readonly name: string;
   readonly startAt = dateNow();
   endAt: number | null = null;
-  readonly spanId = generateSpanId();
+  readonly spanId: string = generateSpanId();
   readonly parentSpanId?: string;
   readonly attributes: Record<string, AttributePrimitive> = {};
   readonly events: SpanEventType[] = [];
@@ -108,14 +108,11 @@ class SpanObj {
   child(name: string): SpanObj {
     return this.trace.newSpan({ name, parentSpanId: this.spanId });
   }
-  inSpan<T>(
-    name: string,
-    fn: (span: SpanObj) => T | Promise<T>,
-  ): T | Promise<T> {
+  inSpan<T>(name: string, fn: (span: Span) => T | Promise<T>): T | Promise<T> {
     const span = this.child(name);
     const ret = fn(span);
     if (isPromise(ret)) {
-      return ret.finally(() => span.end()) as Promise<T>;
+      return ret.finally(() => span.end()) as T;
     }
     span.end();
     return ret;
@@ -167,9 +164,9 @@ class SpanObj {
     // endAt will be filled in `toJSON`
     return await this.trace.post();
   }
-  async postError(error: Error) {
+  postError(error: Error) {
     this.addErrorEvent(error);
-    return await this.post();
+    return this.post();
   }
   // no need to do `.bind(span)`
   get fetch() {
@@ -195,12 +192,12 @@ class SpanObj {
             performance.now() - start,
           );
           return response;
-        }).catch((error) => {
-          span.postError(error).then(() => {
-            throw error;
-          });
+        }).catch(async (error) => {
+          await span.postError(error);
+          throw error;
         });
       });
+      return res;
     };
   }
 }
