@@ -9,7 +9,8 @@
     "check": "deno fmt --check && deno lint && deno check && deno test -P --allow-read=.,$(deno info --json | jq -r .denoDir)",
     "build": "deno task --cwd=client build",
     "dev": "deno task --cwd=server dev",
-    "serve": "deno serve --allow-read=./client/_site server/serve.ts"
+    "serve": "deno serve --allow-read=./client/_site server/serve.ts",
+    "publish": "cd otlp && deno publish --allow-slow-types"
   },
   "imports": {
     "@hono/hono": "jsr:@hono/hono@^4.10.8",
