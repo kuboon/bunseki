@@ -6,13 +6,11 @@
     "./exporter/browser.ts": "./exporter/browser.ts",
     "./exporter/server.ts": "./exporter/server.ts",
     "./storage.ts": "./storage.ts",
-    "./source-map.ts": "./source-map.ts"
-    "./exporter.ts": "./exporter/mod.ts",
-    "./schemas.ts": "./schemas.ts",
-    "./storage.ts": "./storage.ts"
-    "./storage.ts": "./storage.ts"
+    "./source-map.ts": "./source-map.ts",
+    "./schemas.ts": "./schemas.ts"
   },
   "imports": {
-    "@opentelemetry/api": "npm:@opentelemetry/api@^1.9.0"
+    "@opentelemetry/api": "npm:@opentelemetry/api@^1.9.0",
+    "source-map": "npm:source-map@^0.7.6"
   }
 }

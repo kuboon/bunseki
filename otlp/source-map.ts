@@ -1,4 +1,4 @@
-import { SourceMapConsumer } from "npm:source-map@0.7.4";
+import { SourceMapConsumer } from "source-map";
 
 /**
  * Resolves a stack trace using source maps found at the URLs in the stack frames.
@@ -76,7 +76,7 @@ export async function resolveStacktrace(
         consumers.set(url, consumer);
       } catch (_e) {
         // Fail silently for this URL, just log to debug if needed
-        // console.warn(`Error loading source map for ${url}:`, e);
+        console.warn(`Error loading source map for ${url}:`, _e);
       }
     }),
   );

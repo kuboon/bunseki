@@ -6,7 +6,7 @@
     "./server"
   ],
   "tasks": {
-    "check": "deno fmt --check && deno lint && deno check && deno test -P",
+    "check": "deno fmt --check && deno lint && deno check && deno test -P --allow-read=.,$(deno info --json | jq -r .denoDir)",
     "build": "deno task --cwd=client build",
     "dev": "deno task --cwd=server dev",
     "serve": "deno serve --allow-read=./client/_site server/serve.ts"
@@ -21,10 +21,17 @@
     "arktype": "npm:arktype@^2.1.28",
     "lume/jsx-runtime": "https://cdn.jsdelivr.net/gh/oscarotero/ssx@0.1.14/jsx-runtime.ts"
   },
-  "unstable": ["bundle", "fmt-component", "temporal", "kv"],
+  "unstable": [
+    "bundle",
+    "fmt-component",
+    "temporal",
+    "kv"
+  ],
   "lint": {
     "rules": {
-      "tags": ["recommended"]
+      "tags": [
+        "recommended"
+      ]
     }
   },
   "fmt": {
@@ -32,7 +39,9 @@
   },
   "test": {
     "permissions": {
-      "read": ["./client/_site"]
+      "read": [
+        "./client/_site"
+      ]
     }
   },
   "deploy": {

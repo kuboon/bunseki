@@ -84,6 +84,7 @@
     "npm:remove-markdown@0.6.2": "0.6.2",
     "npm:sharp@0.34.5": "0.34.5",
     "npm:source-map@0.7.4": "0.7.4",
+    "npm:source-map@~0.7.6": "0.7.6",
     "npm:tailwindcss@4.1.17": "4.1.17",
     "npm:tailwindcss@4.1.18": "4.1.18"
   },
@@ -1427,6 +1428,9 @@
     "source-map@0.7.4": {
       "integrity": "sha512-l3BikUxvPOcn5E74dZiq5BGsTb5yEwhaTSzccU6t4sDOH8NWJCstKO5QT2CvtFoK6F0saL7p9xHAqHOlCPJygA=="
     },
+    "source-map@0.7.6": {
+      "integrity": "sha512-i5uvt8C3ikiWeNZSVZNWcfZPItFQOsYTUAOkcUPGd8DqDy1uOUikjt5dG+uRlwyvR108Fb9DOd4GvXfT0N2/uQ=="
+    },
     "supports-preserve-symlinks-flag@1.0.0": {
       "integrity": "sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w=="
     },
@@ -2178,7 +2182,8 @@
       },
       "otlp": {
         "dependencies": [
-          "npm:@opentelemetry/api@^1.9.0"
+          "npm:@opentelemetry/api@^1.9.0",
+          "npm:source-map@~0.7.6"
         ]
       }
     }

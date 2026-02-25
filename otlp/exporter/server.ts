@@ -1,7 +1,5 @@
 import { SpanKind } from "../schemas.ts";
 import { sendRedirectMetric } from "./core/metrics.ts";
-import type { SpanObj } from "./core/trace.ts";
-
 import { OtlpExporterBase, SpanObj } from "./core/mod.ts";
 
 export class OtlpExporter extends OtlpExporterBase {

@@ -108,7 +108,10 @@ class SpanObj {
   child(name: string): SpanObj {
     return this.trace.newSpan({ name, parentSpanId: this.spanId });
   }
-  inSpan<T>(name: string, fn: (span: Span) => T | Promise<T>): T | Promise<T> {
+  inSpan<T>(
+    name: string,
+    fn: (span: SpanObj) => T | Promise<T>,
+  ): T | Promise<T> {
     const span = this.child(name);
     const ret = fn(span);
     if (isPromise(ret)) {
@@ -197,7 +200,6 @@ class SpanObj {
           throw error;
         });
       });
-      return res;
     };
   }
 }

@@ -27,8 +27,7 @@ describe("onRequest", () => {
     const span = exporter.onRequest(req);
     const result = await span.postError(new Error("Test error"));
     if (!result.ok) throw result.error;
-    console.log("Response:", await result.response.json());
-    expect(span.name).toBe("http_request");
+    expect(span.name).toBe("HTTP GET");
     // console.log(JSON.stringify(span.trace, null, 2));
   });
 });

@@ -22,6 +22,7 @@ Deno.test("resolveStacktrace - maps correctly", async () => {
   try {
     // @ts-ignore: Mock fetch
     globalThis.fetch = (input: RequestInfo | URL) => {
+      console.log("Mock fetch called with:", input.toString());
       const url = input.toString();
       if (url === jsUrl) {
         return Promise.resolve(
