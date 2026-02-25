@@ -1,4 +1,4 @@
-import { Trace, TraceOpts } from "./trace.ts";
+import { TraceObj, TraceOpts } from "./trace.ts";
 import type { AppType } from "../../collector/mod.ts";
 
 import { hc } from "@hono/hono/client";
@@ -11,7 +11,7 @@ type NewOptions = {
 };
 
 export class OtlpExporterBase {
-  readonly scope = { name: "honotlp", version: "1.0.0" };
+  readonly scope = { name: "@kuboon/otlp", version: "1.0.0" };
   readonly serviceName: string;
   private readonly endpoint: string;
   client: ReturnType<typeof hc<AppType>>;
@@ -20,7 +20,8 @@ export class OtlpExporterBase {
     this.endpoint = options.endpoint ?? "https://bunseki.kbn.one/otlp";
     this.client = hc<AppType>(this.endpoint);
   }
-  newTrace(opts: TraceOpts = {}): Trace {
-    return new Trace(this, opts);
+  newTrace(opts: TraceOpts = {}): TraceObj {
+    return new TraceObj(this, opts);
   }
 }
+export type { SpanObj, TraceObj } from "./trace.ts";

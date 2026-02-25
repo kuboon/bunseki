@@ -26,11 +26,11 @@ export type TraceOpts = {
   spanKind?: number;
 };
 
-export class Trace {
+export class TraceObj {
   readonly traceId: string;
   readonly parentSpanId?: string;
   readonly spanKind: number;
-  spans: Span[] = [];
+  spans: SpanObj[] = [];
 
   constructor(
     private exporter: ExporterConfig,
@@ -39,8 +39,8 @@ export class Trace {
     this.traceId = opts.traceId || generateTraceId();
     this.spanKind = opts.spanKind || SpanKind.INTERNAL;
   }
-  newSpan(opts: SpanOpts): Span {
-    const span = new Span(this, opts);
+  newSpan(opts: SpanOpts): SpanObj {
+    const span = new SpanObj(this, opts);
     this.spans.push(span);
     return span;
   }
@@ -85,7 +85,7 @@ type SpanOpts = {
   parentSpanId?: string;
 };
 
-class Span {
+class SpanObj {
   readonly name: string;
   readonly startAt = dateNow();
   endAt: number | null = null;
@@ -95,20 +95,23 @@ class Span {
   readonly events: SpanEventType[] = [];
   status?: { code: number; message?: string };
   posted = false;
-  constructor(public trace: Trace, opts: SpanOpts) {
+  constructor(public trace: TraceObj, opts: SpanOpts) {
     this.name = opts.name;
     this.parentSpanId = opts.parentSpanId;
   }
   end() {
-    this.endAt = dateNow();
+    this.endAt ||= dateNow();
   }
   get traceparent() {
     return `00-${this.trace.traceId}-${this.spanId}-01`;
   }
-  child(name: string): Span {
+  child(name: string): SpanObj {
     return this.trace.newSpan({ name, parentSpanId: this.spanId });
   }
-  inSpan<T>(name: string, fn: (span: Span) => T | Promise<T>): T | Promise<T> {
+  inSpan<T>(
+    name: string,
+    fn: (span: SpanObj) => T | Promise<T>,
+  ): T | Promise<T> {
     const span = this.child(name);
     const ret = fn(span);
     if (isPromise(ret)) {
@@ -146,8 +149,8 @@ class Span {
     });
   }
   toJSON() {
+    this.endAt ||= dateNow();
     const attributes = toAttributes(this.attributes);
-    this.endAt = this.endAt || dateNow();
     return {
       traceId: this.trace.traceId,
       kind: this.trace.spanKind,
@@ -161,6 +164,7 @@ class Span {
     } satisfies SpanType;
   }
   async post() {
+    // endAt will be filled in `toJSON`
     return await this.trace.post();
   }
   async postError(error: Error) {
@@ -170,18 +174,22 @@ class Span {
   // no need to do `.bind(span)`
   get fetch() {
     return (input: RequestInfo, init: RequestInit = {}) => {
-      return this.inSpan("fetch", (span) => {
-        span.addAttribute(
-          "http.url",
-          typeof input === "string" ? input : input.url,
-        );
-        span.addAttribute("http.method", init.method || "GET");
+      const method = init.method || "GET";
+      const reqUrl = new URL(
+        typeof input === "string" ? input : input.url,
+      );
+      return this.inSpan(`HTTP ${method} ${reqUrl.pathname}`, (span) => {
+        span.addAttribute("server.address", reqUrl.hostname);
+        span.addAttribute("server.port", reqUrl.port || "80");
+        span.addAttribute("http.request.method", method);
+        span.addAttribute("url.full", reqUrl.href);
+        span.addAttribute("url.path", reqUrl.pathname);
         const headers = new Headers(init.headers);
         headers.set("traceparent", this.traceparent);
         init.headers = headers;
         const start = performance.now();
         return fetch(input, init).then((response) => {
-          span.addAttribute("http.status_code", response.status);
+          span.addAttribute("http.response.status_code", response.status);
           span.addAttribute(
             "http.duration_ms",
             performance.now() - start,
@@ -196,3 +204,4 @@ class Span {
     };
   }
 }
+export type { SpanObj };

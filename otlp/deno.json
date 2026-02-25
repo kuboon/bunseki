@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "exports": {
     "./collector.ts": "./collector/mod.ts",
-    "./exporter.ts": "./exporter/mod.ts",
-    "./schemas.ts": "./schemas.ts",
+    "./exporter/browser.ts": "./exporter/browser.ts",
+    "./exporter/server.ts": "./exporter/server.ts",
     "./storage.ts": "./storage.ts",
     "./source-map.ts": "./source-map.ts"
   }
