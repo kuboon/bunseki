@@ -16,42 +16,6 @@ function getServiceName(
   return attr?.value?.stringValue || null;
 }
 
-// Helper to extract exception events from span
-function extractExceptions(span: {
-  events?: Array<{
-    name: string;
-    attributes?: Array<{
-      key: string;
-      value: {
-        stringValue?: string;
-        arrayValue?: { values: Array<{ stringValue?: string }> };
-        boolValue?: boolean;
-      };
-    }>;
-  }>;
-}): Array<{ type: string; message: string; stacktrace: string[] }> {
-  if (!span.events) return [];
-
-  return span.events
-    .filter((event) => event.name === "exception")
-    .map((event) => {
-      const attrs = event.attributes || [];
-      const type = attrs.find((a) =>
-        a.key === "exception.type"
-      )?.value?.stringValue || "";
-      const message =
-        attrs.find((a) => a.key === "exception.message")?.value?.stringValue ||
-        "";
-      const stackAttr = attrs.find((a) => a.key === "exception.stacktrace");
-      const stacktrace =
-        stackAttr?.value?.arrayValue?.values.map((v) => v.stringValue || "") ||
-        [];
-
-      return { type, message, stacktrace };
-    })
-    .filter((exc) => exc.type && exc.message);
-}
-
 /**
  * Create OTLP collector router with the given storage implementation
  * @param storage Storage implementation for telemetry data
@@ -79,10 +43,9 @@ export function createCollectorRouter(storage: OtlpStorage) {
                 // Store the span
                 await storage.storeSpan(serviceName, span);
 
-                // Extract and store errors
-                const exceptions = extractExceptions(span);
-                for (const exception of exceptions) {
-                  await storage.storeError(serviceName, span, exception);
+                // Store span events
+                for (const event of span.events || []) {
+                  await storage.storeEvent(serviceName, span, event);
                 }
               }
             }

@@ -2,7 +2,7 @@
 // This is a simple implementation without persistence
 
 import type { OtlpStorage } from "../storage.ts";
-import type { SpanType } from "../schemas.ts";
+import type { SpanEventType, SpanType } from "../schemas.ts";
 
 /**
  * Simple in-memory storage for OTLP telemetry data
@@ -10,14 +10,10 @@ import type { SpanType } from "../schemas.ts";
  */
 export class InMemoryStorage implements OtlpStorage {
   private spans: SpanType[] = [];
-  private errors: Array<{
+  private events: Array<{
     serviceName: string;
     span: SpanType;
-    exception: {
-      type: string;
-      message: string;
-      stacktrace: string[];
-    };
+    event: SpanEventType;
   }> = [];
   private counters: Map<string, number> = new Map();
 
@@ -26,19 +22,15 @@ export class InMemoryStorage implements OtlpStorage {
     return Promise.resolve();
   }
 
-  storeError(
+  storeEvent(
     serviceName: string,
     span: SpanType,
-    exceptionEvent: {
-      type: string;
-      message: string;
-      stacktrace: string[];
-    },
+    event: SpanEventType,
   ): Promise<void> {
-    this.errors.push({
+    this.events.push({
       serviceName,
       span,
-      exception: exceptionEvent,
+      event,
     });
     return Promise.resolve();
   }
@@ -61,8 +53,8 @@ export class InMemoryStorage implements OtlpStorage {
     return [...this.spans];
   }
 
-  getErrors() {
-    return [...this.errors];
+  getEvents() {
+    return [...this.events];
   }
 
   getCounters(): Map<string, number> {
@@ -71,7 +63,7 @@ export class InMemoryStorage implements OtlpStorage {
 
   clear(): void {
     this.spans = [];
-    this.errors = [];
+    this.events = [];
     this.counters.clear();
   }
 }

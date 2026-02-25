@@ -1,6 +1,6 @@
 // generateDummyData.ts
 // ダミーデータ生成スクリプト
-import { incrementCounter, initStorage, storeError, storeSpan } from "./mod.ts";
+import { incrementCounter, initStorage, storeEvent, storeSpan } from "./mod.ts";
 import type { SpanType } from "@kuboon/otlp/schemas.ts";
 
 const SERVICE_NAME = "o.kbn.one";
@@ -41,10 +41,30 @@ async function main() {
       traceId: `errtrace-${i}`,
       startTimeUnixNano: `${Date.now() * 1_000_000}`,
     } as SpanType;
-    await storeError(SERVICE_NAME, span, {
-      type: "Error",
-      message: `Dummy error message ${i}`,
-      stacktrace: ["dummyStack1", "dummyStack2"],
+    await storeEvent(SERVICE_NAME, span, {
+      name: "exception",
+      timeUnixNano: `${Date.now() * 1_000_000}`,
+      attributes: [
+        {
+          key: "exception.type",
+          value: { stringValue: "Error" },
+        },
+        {
+          key: "exception.message",
+          value: { stringValue: `Dummy error message ${i}` },
+        },
+        {
+          key: "exception.stacktrace",
+          value: {
+            arrayValue: {
+              values: [
+                { stringValue: "dummyStack1" },
+                { stringValue: "dummyStack2" },
+              ],
+            },
+          },
+        },
+      ],
     });
   }
 

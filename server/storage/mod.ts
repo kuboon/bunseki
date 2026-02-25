@@ -1,6 +1,6 @@
 // Storage layer for OTLP telemetry data using Deno KV
 
-import type { SpanType } from "@kuboon/otlp/schemas.ts";
+import type { SpanEventType, SpanType } from "@kuboon/otlp/schemas.ts";
 import { resolveStacktrace } from "@kuboon/otlp/source-map.ts";
 
 // Initialize Deno KV
@@ -291,22 +291,37 @@ export async function getRecentSpans(
 
 // === Error Storage ===
 
-export async function storeError(
+export async function storeEvent(
   serviceName: string,
   span: SpanType,
-  exceptionEvent: {
-    type: string;
-    message: string;
-    stacktrace: string[];
-  },
+  event: SpanEventType,
 ) {
+  if (event.name !== "exception") {
+    return;
+  }
+
+  const attrs = event.attributes || [];
+  const findStringValue = (key: string): string => {
+    const attribute = attrs.find((attribute) => attribute.key === key);
+    return attribute?.value?.stringValue || "";
+  };
+
+  const type = findStringValue("exception.type") || "Exception";
+  const message = findStringValue("exception.message");
+  const stacktrace =
+    attrs.find((attribute) => attribute.key === "exception.stacktrace")?.value
+      ?.arrayValue?.values.map((value) => value.stringValue || "") || [];
+
+  if (!message) {
+    return;
+  }
+
   const kv = getKv();
   await registerService(serviceName);
 
   // Generate error hash from type + message + first line of stack
-  const stackFirst = exceptionEvent.stacktrace[0] || "";
-  const hashInput =
-    `${exceptionEvent.type}:${exceptionEvent.message}:${stackFirst}`;
+  const stackFirst = stacktrace[0] || "";
+  const hashInput = `${type}:${message}:${stackFirst}`;
   const errorHash = await hashString(hashInput);
 
   const timestamp = Math.floor(
@@ -327,9 +342,9 @@ export async function storeError(
   } else {
     errorRecord = {
       errorHash,
-      type: exceptionEvent.type,
-      message: exceptionEvent.message,
-      stacktrace: exceptionEvent.stacktrace,
+      type,
+      message,
+      stacktrace,
       count: 1,
       firstSeen: timestamp,
       lastSeen: timestamp,
@@ -519,7 +534,7 @@ import type { OtlpStorage } from "@kuboon/otlp/storage.ts";
 export function createOtlpStorageAdapter(): OtlpStorage {
   return {
     storeSpan,
-    storeError,
+    storeEvent,
     incrementCounter,
   };
 }

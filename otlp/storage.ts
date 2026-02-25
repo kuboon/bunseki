@@ -1,7 +1,7 @@
 // Storage interface for OTLP collector
 // This allows the collector to be independent of the storage implementation
 
-import type { SpanType } from "./schemas.ts";
+import type { SpanEventType, SpanType } from "./schemas.ts";
 
 /**
  * Storage interface for OTLP telemetry data
@@ -13,16 +13,12 @@ export interface OtlpStorage {
   storeSpan(serviceName: string, span: SpanType): Promise<void>;
 
   /**
-   * Store an error/exception from a span
+   * Store a span event
    */
-  storeError(
+  storeEvent(
     serviceName: string,
     span: SpanType,
-    exceptionEvent: {
-      type: string;
-      message: string;
-      stacktrace: string[];
-    },
+    event: SpanEventType,
   ): Promise<void>;
 
   /**
