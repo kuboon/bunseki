@@ -41,7 +41,7 @@ export class OtlpExporter extends OtlpExporterBase {
   ): Promise<Response> {
     const span = this.onRequest(req);
     try {
-      const res = await next();
+      const res = span.addTraceparentToResponse(await next());
       if (res.ok && res.status >= 300 && res.status < 400) {
         const location = res.headers.get("Location");
         if (location) {

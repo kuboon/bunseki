@@ -197,5 +197,13 @@ class Span {
       });
     };
   }
+  addTraceparentToResponse(res: Response) {
+    const headers = new Headers(res.headers);
+    headers.set("Server-Timing", `traceparent;desc="${this.traceparent}"`);
+    return new Response(res.body, {
+      ...res,
+      headers,
+    });
+  }
 }
 export type { Span };

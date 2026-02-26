@@ -1,6 +1,6 @@
 {
   "name": "@kuboon/otlp",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "exports": {
     "./collector.ts": "./collector/mod.ts",
     "./exporter/browser.ts": "./exporter/browser.ts",
