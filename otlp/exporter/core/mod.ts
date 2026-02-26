@@ -10,7 +10,7 @@ type NewOptions = {
   endpoint?: string;
 };
 
-export class OtlpExporterBase {
+export class OtlpExporter {
   readonly scope = { name: "@kuboon/otlp", version: "1.0.0" };
   readonly serviceName: string;
   private readonly endpoint: string;

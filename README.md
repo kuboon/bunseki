@@ -41,26 +41,44 @@ Endpoint base: `https://your.domain/otlp/`
 
 ### On browser
 
-```ts
-import { OtlpExporter } from "https://jsr.io/@kuboon/otlp/exporter/browser.ts";
+```html
+<html>
+  <head>
+    <script type="module" crossorigin="anonymous" src="https://esm.sh/jsr/@kuboon/otlp/exporter/browser"></script>
+  </head>
+  <body>
+    <script type="module">
+      import { OtlpExporter } from "";
 
-const otlp = new OtlpExporter({ serviceName: "o.kbn.one" });
-let span = await otlp.onPageLoad();
-globalThis.addEventListener("error", (ev) => {
-  span.postError(ev.error);
-});
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    span.post();
-  } else {
-    span = span.trace.newSpan({ name: "page-visible" });
-  }
-});
+      const otlp = new OtlpExporter({
+        serviceName: "your-app",
+        endpoint: "https://your-collector.example.com/otlp",
+      });
 
-// appends `traceparent` header, creats fetch span, post on error
-await span.fetch("/api/on-server", {
-  headers: { traceparent: span.traceparent },
-});
+      const span = await otlp.onPageLoad();
+
+      globalThis.addEventListener("error", (ev) => {
+        if (ev.error instanceof Error) {
+          await span.postError(ev.error);
+        }
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          await span.post();
+        }
+      });
+
+      const apiRes = await fetch("/api/do_something", {
+        method: "POST",
+        headers: {
+          traceparent: span.traceparent,
+        },
+      });
+
+      // or use span.fetch
+  </body>
+</html>
 ```
 
 ### On server

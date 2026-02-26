@@ -1,7 +1,10 @@
 import { SpanKind } from "./types.ts";
 import { sendRedirectMetric } from "./core/metrics.ts";
-import { OtlpExporterBase, Span } from "./core/mod.ts";
+import { OtlpExporter as OtlpExporterBase, Span } from "./core/mod.ts";
 
+type MiddlewareOpts = {
+  postIf?: (res: Response) => boolean;
+};
 export class OtlpExporter extends OtlpExporterBase {
   onRequest(req: Request, route?: string): Span {
     const spanKind = SpanKind.SERVER;
@@ -37,18 +40,19 @@ export class OtlpExporter extends OtlpExporterBase {
   async middleware(
     req: Request,
     next: () => Promise<Response>,
-    postIf: (res: Response) => boolean = () => false,
+    opts: MiddlewareOpts = {},
   ): Promise<Response> {
+    const postIf = opts.postIf || ((res: Response) => !res.ok);
     const span = this.onRequest(req);
     try {
       const res = span.addTraceparentToResponse(await next());
-      if (res.ok && res.status >= 300 && res.status < 400) {
+      if (res.status >= 300 && res.status < 400) {
         const location = res.headers.get("Location");
         if (location) {
           await this.onRedirect(
             req.url,
             location,
-            undefined,
+            undefined, // todo route info is not available here, maybe we can add it to `onRedirect` params later
             res.status,
           );
           return res;
