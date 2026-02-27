@@ -1,6 +1,6 @@
 {
   "name": "@kuboon/otlp",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "exports": {
     "./collector.ts": "./collector/mod.ts",
     "./exporter/browser.ts": "./exporter/browser.ts",
@@ -10,5 +10,12 @@
   "imports": {
     "@opentelemetry/api": "npm:@opentelemetry/api@^1.9.0",
     "source-map": "npm:source-map@^0.7.6"
+  },
+  "compilerOptions": {
+    "lib": [
+      "deno.window",
+      "deno.unstable",
+      "dom"
+    ]
   }
 }

@@ -44,7 +44,7 @@ Endpoint base: `https://your.domain/otlp/`
 ```html
 <html>
   <head>
-    <script type="module" crossorigin="anonymous" src="https://esm.sh/jsr/@kuboon/otlp/exporter/browser"></script>
+    <script async type="module" crossorigin="anonymous" src="https://esm.sh/jsr/@kuboon/otlp/exporter/browser"></script>
   </head>
   <body>
     <script type="module">

@@ -3,7 +3,6 @@ import { createCollectorRouter } from "../collector/router.ts";
 import { InMemoryStorage } from "../collector/storage/memory.ts";
 import { OtlpExporter } from "./server.ts";
 
-import { testClient } from "@hono/hono/testing";
 import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 
@@ -13,8 +12,10 @@ const collector = createCollectorRouter(storage);
 const exporter = new OtlpExporter({
   serviceName: "test-service",
   endpoint: "http://localhost:4318",
+  // deno-lint-ignore require-await
+  fetch: async (req: RequestInfo | URL, init?: RequestInit) =>
+    collector.fetch(new Request(req, init)),
 });
-exporter.client = testClient(collector);
 
 describe("onRequest", () => {
   it("generates http_request span", async () => {

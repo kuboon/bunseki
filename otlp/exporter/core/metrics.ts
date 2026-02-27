@@ -1,8 +1,8 @@
 import { toAttributes, toUnixNano } from "../../protojson.ts";
-import { dateNow, ExporterConfig } from "../utils.ts";
-import { MetricsRequest } from "../types.ts";
+import { dateNow } from "../utils.ts";
+import { IOtlpExporter, MetricsRequest } from "../types.ts";
 
-export async function sendPVMetric(exporter: ExporterConfig, path: string) {
+export async function sendPVMetric(exporter: IOtlpExporter, path: string) {
   const now = dateNow();
   const timeUnixNano = toUnixNano(now);
 
@@ -48,13 +48,13 @@ export async function sendPVMetric(exporter: ExporterConfig, path: string) {
   } satisfies MetricsRequest;
 
   // Send metric asynchronously (fire and forget)
-  await exporter.client.v1.metrics.$post({ json: metric }).catch((err) => {
+  await exporter.fetch("/v1/metrics", metric).catch((err) => {
     console.error("Failed to send PV metric:", err);
   });
 }
 
 export function sendRedirectMetric(
-  exporter: ExporterConfig,
+  exporter: IOtlpExporter,
   oldPath: string,
   newPath: string,
   route?: string,
@@ -107,7 +107,7 @@ export function sendRedirectMetric(
   } satisfies MetricsRequest;
 
   // Send metric asynchronously (fire and forget)
-  return exporter.client.v1.metrics.$post({ json: metric }).catch((err) => {
+  return exporter.fetch("/v1/metrics", metric).catch((err) => {
     console.error("Failed to send Redirect metric:", err);
   });
 }

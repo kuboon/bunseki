@@ -1,6 +1,5 @@
-/// <reference lib="dom" />
 import { sendPVMetric } from "./core/metrics.ts";
-import { OtlpExporter, type Trace } from "./core/mod.ts";
+import { OtlpExporter } from "./core/mod.ts";
 
 // get traceparent from "Server-Timing" header if available
 function getTraceparent(): {
@@ -38,22 +37,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (parentSpanId) await span.post();
   await sendPVMetric(exporter, location.pathname);
 });
-globalThis.addEventListener("error", async (ev) => {
-  const error = ev.error instanceof Error
-    ? ev.error
-    : new Error(String(ev.error));
-  await span.postError(error);
-});
-globalThis.addEventListener("unhandledrejection", async (ev) => {
-  const error = ev.reason instanceof Error
-    ? ev.reason
-    : new Error(String(ev.reason));
-  await span.postError(error);
-});
+function handleError(ev: unknown) {
+  const error = ev instanceof Error ? ev : new Error(String(ev));
+  span.postError(error);
+}
+globalThis.addEventListener("error", handleError, true);
+globalThis.addEventListener("unhandledrejection", handleError);
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) trace = exporter.newTrace();
 });
-declare global {
-  var otlpTrace: Trace;
-}
-globalThis.otlpTrace = trace;
+// deno-lint-ignore no-explicit-any
+(globalThis as any).otlpTrace = trace;
