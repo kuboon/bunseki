@@ -2,11 +2,12 @@ import dashboardApiRouter from "./api/dashboard.ts";
 // import kvAdminRouter from "@kuboon/kvAdmin";
 import { ALLOWED_DOMAINS } from "../types.ts";
 import { createOtlpStorageAdapter, initStorage } from "./storage/mod.ts";
-import { serveDynamicStatic } from "./utils/serveDynamicStatic.ts";
-
+import { rewriteRequestPath, STATIC_ROOT } from "./utils/serveDynamicStatic.ts";
 import { createCollectorRouter } from "../otlp/collector/router.ts";
+
 import { Hono } from "@hono/hono";
 import { cors } from "@hono/hono/cors";
+import { serveStatic } from "@hono/hono/deno";
 
 // Initialize storage on startup
 await initStorage();
@@ -66,8 +67,9 @@ app.route("/", dashboardApiRouter);
 // This automatically resolves paths like /dashboard/:serviceName/index.js
 app.get(
   "*",
-  serveDynamicStatic({
-    root: new URL("../client/_site", import.meta.url).pathname,
+  serveStatic({
+    root: STATIC_ROOT,
+    rewriteRequestPath,
   }),
 );
 

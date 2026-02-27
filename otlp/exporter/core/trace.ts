@@ -4,8 +4,14 @@ import {
   toAttributes,
   toUnixNano,
 } from "../../protojson.ts";
-import { SpanEventType, SpanKind, SpanType, TracesRequest } from "../types.ts";
-import { dateNow, ExporterConfig } from "../utils.ts";
+import {
+  type IOtlpExporter,
+  SpanEventType,
+  SpanKind,
+  SpanType,
+  TracesRequest,
+} from "../types.ts";
+import { dateNow } from "../utils.ts";
 
 const randomBytes = (length: number) =>
   crypto.getRandomValues(new Uint8Array(length));
@@ -28,7 +34,7 @@ export class Trace {
   spans: Span[] = [];
 
   constructor(
-    private exporter: ExporterConfig,
+    private exporter: IOtlpExporter,
     opts: TraceOpts = {},
   ) {
     this.traceId = opts.traceId || generateTraceId();
@@ -63,9 +69,7 @@ export class Trace {
   }
   async post() {
     try {
-      const ret = await this.exporter.client.v1.traces.$post({
-        json: this.toJSON(),
-      });
+      const ret = await this.exporter.fetch("/v1/traces", this.toJSON());
       for (const span of this.spans) span.posted = true;
       return { ok: true as const, response: ret };
     } catch (error) {

@@ -1,54 +1,36 @@
-import type { Context, Next } from "@hono/hono";
-import { existsSync } from "@std/fs";
-import { join, normalize } from "@std/path";
+import { join } from "@std/path";
+
+export const STATIC_ROOT = new URL("../../client/_site", import.meta.url)
+  .pathname;
+const PATH_INDEX = buildPathIndex(STATIC_ROOT);
+
+type TrieNode = {
+  children: Map<string, TrieNode>;
+  paramChildren: Array<{ segment: string; node: TrieNode }>;
+  filePath?: string;
+};
+
+type PathIndex = {
+  files: Set<string>;
+  dynamicFiles: string[];
+  dynamicDirs: Set<string>;
+  dynamicTrie: TrieNode;
+};
 
 /**
- * Middleware to serve static files with automatic resolution of dynamic path parameters
+ * Rewrite request path with automatic resolution of dynamic path parameters
  * like `:serviceName`, `:errorHash`, etc.
  *
  * Example: GET /dashboard/o.kbn.one/index.js
- *          -> Resolves to ./client/_site/dashboard/:serviceName/index.js
- *
- * @param options.root - Base directory for static files (e.g., "./client/_site")
+ *          -> Rewrites to /dashboard/:serviceName/index.js
  */
-export function serveDynamicStatic(options: { root: string }) {
-  return async (c: Context, next: Next) => {
-    const requestPath = c.req.path;
+export function rewriteRequestPath(path: string): string {
+  const rewritten = resolvePathWithParams(STATIC_ROOT, path);
+  if (!rewritten) {
+    return path;
+  }
 
-    // Try to resolve the file path with dynamic parameters
-    const resolvedFilePath = await resolvePathWithParams(
-      options.root,
-      requestPath,
-    );
-
-    if (resolvedFilePath) {
-      // Security check: ensure the resolved path is within root
-      const absoluteRoot = normalize(join(Deno.cwd(), options.root));
-      const absoluteFile = normalize(join(Deno.cwd(), resolvedFilePath));
-
-      if (!absoluteFile.startsWith(absoluteRoot)) {
-        return c.text("Forbidden", 403);
-      }
-
-      try {
-        // Read file content
-        const content = await Deno.readFile(resolvedFilePath);
-
-        // Determine content type
-        const ext = resolvedFilePath.split(".").pop()?.toLowerCase();
-        const contentType = getContentType(ext);
-
-        return c.body(content, 200, {
-          "Content-Type": contentType,
-        });
-      } catch (error) {
-        console.error(`Error serving file ${resolvedFilePath}:`, error);
-      }
-    }
-
-    // File not found, continue to next middleware
-    await next();
-  };
+  return rewritten.startsWith("/") ? rewritten : `/${rewritten}`;
 }
 
 /**
@@ -58,161 +40,205 @@ export function serveDynamicStatic(options: { root: string }) {
  * @param requestPath - Request path (e.g., /dashboard/o.kbn.one/index.js)
  * @returns Resolved file path or null if not found
  */
-async function resolvePathWithParams(
-  root: string,
+function resolvePathWithParams(
+  _root: string,
   requestPath: string,
-): Promise<string | null> {
-  // Remove leading slash and normalize
-  let normalizedPath = requestPath.startsWith("/")
-    ? requestPath.slice(1)
-    : requestPath;
+): string | null {
+  const { normalizedPath, endsWithSlash } = normalizeRequestPath(requestPath);
 
-  // Remove trailing slash
-  const endsWithSlash = normalizedPath.endsWith("/");
-  if (endsWithSlash && normalizedPath.length > 1) {
-    normalizedPath = normalizedPath.slice(0, -1);
+  const directHit = findDirectFile(normalizedPath, endsWithSlash);
+  if (directHit) {
+    return directHit;
   }
 
-  // If path is empty (root request), default to index.html
-  if (normalizedPath === "" || normalizedPath === "/") {
-    normalizedPath = "index.html";
+  if (PATH_INDEX.dynamicDirs.size === 0) {
+    return null;
   }
 
-  // First, try the direct path
-  const directPath = join(root, normalizedPath);
-  if (existsSync(directPath)) {
-    const stat = await Deno.stat(directPath);
-    if (stat.isFile) {
-      return directPath;
-    }
-    // If it's a directory, try index.html
-    if (stat.isDirectory) {
-      const indexPath = join(directPath, "index.html");
-      if (existsSync(indexPath) && (await Deno.stat(indexPath)).isFile) {
-        return indexPath;
-      }
-    }
-  }
-
-  // Split path into segments
-  const segments = normalizedPath.split("/").filter(Boolean);
-
-  // Try all combinations of replacing segments with :param directories
-  const filePath = await findFileWithParams(root, segments, 0, endsWithSlash);
-  return filePath;
+  return findDynamicFile(normalizedPath, endsWithSlash);
 }
 
 /**
  * Recursively try to find a file by substituting path segments with :param directories
  */
-async function findFileWithParams(
-  currentDir: string,
-  remainingSegments: string[],
-  depth: number,
-  endsWithSlash = false,
-): Promise<string | null> {
-  if (remainingSegments.length === 0) {
-    // If no segments left, try to find index.html in current directory
-    const indexPath = join(currentDir, "index.html");
-    if (existsSync(indexPath) && (await Deno.stat(indexPath)).isFile) {
-      return indexPath;
-    }
-    return null;
+function normalizeRequestPath(requestPath: string): {
+  normalizedPath: string;
+  endsWithSlash: boolean;
+} {
+  const noLeadingSlash = requestPath.startsWith("/")
+    ? requestPath.slice(1)
+    : requestPath;
+
+  const endsWithSlash = noLeadingSlash.endsWith("/");
+  const trimmed = endsWithSlash && noLeadingSlash.length > 1
+    ? noLeadingSlash.slice(0, -1)
+    : noLeadingSlash;
+
+  if (trimmed === "" || trimmed === "/") {
+    return { normalizedPath: "index.html", endsWithSlash: false };
   }
 
-  const [currentSegment, ...restSegments] = remainingSegments;
+  return { normalizedPath: trimmed, endsWithSlash };
+}
 
-  // If this is the last segment, it could be a file or directory
-  if (restSegments.length === 0) {
-    // Try as a file first (unless it originally ended with /)
-    if (!endsWithSlash) {
-      const directFile = join(currentDir, currentSegment);
-      if (existsSync(directFile)) {
-        const stat = await Deno.stat(directFile);
-        if (stat.isFile) {
-          return directFile;
-        }
-      }
-    }
-
-    // Try as a directory - check both direct match and :param directories
-    const directDir = join(currentDir, currentSegment);
-    if (existsSync(directDir) && (await Deno.stat(directDir)).isDirectory) {
-      const indexPath = join(directDir, "index.html");
-      if (existsSync(indexPath) && (await Deno.stat(indexPath)).isFile) {
-        return indexPath;
-      }
-    }
-
-    // Try :param directories for the last segment
-    try {
-      for await (const entry of Deno.readDir(currentDir)) {
-        if (entry.isDirectory && entry.name.startsWith(":")) {
-          const paramDir = join(currentDir, entry.name);
-          const indexPath = join(paramDir, "index.html");
-          if (existsSync(indexPath) && (await Deno.stat(indexPath)).isFile) {
-            return indexPath;
-          }
-        }
-      }
-    } catch {
-      // Directory might not exist or not readable
-    }
-
-    return null;
+function findDirectFile(path: string, endsWithSlash: boolean): string | null {
+  if (!endsWithSlash && PATH_INDEX.files.has(path)) {
+    return path;
   }
 
-  // Try direct directory match first
-  const directDir = join(currentDir, currentSegment);
-  if (existsSync(directDir) && (await Deno.stat(directDir)).isDirectory) {
-    const result = await findFileWithParams(
-      directDir,
-      restSegments,
-      depth + 1,
-      endsWithSlash,
-    );
-    if (result) return result;
-  }
-
-  // Try matching with :param directories
-  try {
-    for await (const entry of Deno.readDir(currentDir)) {
-      if (entry.isDirectory && entry.name.startsWith(":")) {
-        const paramDir = join(currentDir, entry.name);
-        const result = await findFileWithParams(
-          paramDir,
-          restSegments,
-          depth + 1,
-          endsWithSlash,
-        );
-        if (result) return result;
-      }
-    }
-  } catch {
-    // Directory might not exist or not readable
+  const indexPath = `${path}/index.html`;
+  if (PATH_INDEX.files.has(indexPath)) {
+    return indexPath;
   }
 
   return null;
 }
 
-/**
- * Get content type based on file extension
- */
-function getContentType(ext: string | undefined): string {
-  const types: Record<string, string> = {
-    html: "text/html; charset=utf-8",
-    css: "text/css; charset=utf-8",
-    js: "application/javascript; charset=utf-8",
-    json: "application/json; charset=utf-8",
-    png: "image/png",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    gif: "image/gif",
-    svg: "image/svg+xml",
-    ico: "image/x-icon",
-    woff: "font/woff",
-    woff2: "font/woff2",
-  };
+function findDynamicFile(path: string, endsWithSlash: boolean): string | null {
+  const segments = path.split("/").filter(Boolean);
 
-  return types[ext || ""] || "application/octet-stream";
+  if (!endsWithSlash) {
+    const directMatch = matchTrie(segments, PATH_INDEX.dynamicTrie);
+    if (directMatch) {
+      return directMatch;
+    }
+  }
+
+  const directoryMatch = matchTrie([
+    ...segments,
+    "index.html",
+  ], PATH_INDEX.dynamicTrie);
+  return directoryMatch;
+}
+
+function matchTrie(
+  segments: string[],
+  node: TrieNode,
+  index = 0,
+): string | null {
+  if (index === segments.length) {
+    return node.filePath ?? null;
+  }
+
+  const segment = segments[index];
+  const staticChild = node.children.get(segment);
+  if (staticChild) {
+    const staticResult = matchTrie(segments, staticChild, index + 1);
+    if (staticResult) {
+      return staticResult;
+    }
+  }
+
+  for (const { node: paramNode } of node.paramChildren) {
+    const paramResult = matchTrie(segments, paramNode, index + 1);
+    if (paramResult) {
+      return paramResult;
+    }
+  }
+
+  return null;
+}
+
+function createTrieNode(): TrieNode {
+  return {
+    children: new Map<string, TrieNode>(),
+    paramChildren: [],
+  };
+}
+
+function addPathToTrie(root: TrieNode, path: string): void {
+  const segments = path.split("/").filter(Boolean);
+  let node = root;
+
+  for (const segment of segments) {
+    if (segment.startsWith(":")) {
+      const existing = node.paramChildren.find((item) =>
+        item.segment === segment
+      )
+        ?.node;
+      if (existing) {
+        node = existing;
+        continue;
+      }
+
+      const newNode = createTrieNode();
+      node.paramChildren.push({ segment, node: newNode });
+      node = newNode;
+      continue;
+    }
+
+    const existing = node.children.get(segment);
+    if (existing) {
+      node = existing;
+      continue;
+    }
+
+    const newNode = createTrieNode();
+    node.children.set(segment, newNode);
+    node = newNode;
+  }
+
+  node.filePath = path;
+}
+
+function buildPathIndex(root: string): PathIndex {
+  const files = new Set<string>();
+  const dynamicFiles: string[] = [];
+  const dynamicDirs = new Set<string>();
+  const dynamicTrie = createTrieNode();
+
+  const stack = ["" as string];
+
+  while (stack.length > 0) {
+    const relativeDir = stack.pop();
+    if (relativeDir === undefined) {
+      continue;
+    }
+
+    const absoluteDir = relativeDir === "" ? root : join(root, relativeDir);
+
+    let entries: Deno.DirEntry[] = [];
+    try {
+      entries = [...Deno.readDirSync(absoluteDir)];
+    } catch (error) {
+      if (error instanceof Deno.errors.NotFound) {
+        continue;
+      }
+      throw error;
+    }
+
+    for (const entry of entries) {
+      const relativePath = relativeDir === ""
+        ? entry.name
+        : `${relativeDir}/${entry.name}`;
+
+      if (entry.isDirectory) {
+        if (entry.name.includes(":")) {
+          dynamicDirs.add(relativePath);
+        }
+        stack.push(relativePath);
+        continue;
+      }
+
+      if (!entry.isFile) {
+        continue;
+      }
+
+      files.add(relativePath);
+      if (relativePath.includes(":")) {
+        dynamicFiles.push(relativePath);
+      }
+    }
+  }
+
+  for (const file of dynamicFiles) {
+    addPathToTrie(dynamicTrie, file);
+  }
+
+  return {
+    files,
+    dynamicFiles,
+    dynamicDirs,
+    dynamicTrie,
+  };
 }

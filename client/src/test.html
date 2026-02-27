@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script>
+      const e = [], p = (err) => e.push(err);
+      addEventListener("error", p, true);
+      addEventListener("unhandledrejection", p);
+      addEventListener("DOMContentLoaded", () => {
+        removeEventListener("error", p, true);
+        removeEventListener("unhandledrejection", p);
+        for (const err of e) dispatchEvent(err);
+      });
+    </script>
+    <script
+      type="module"
+      crossorigin="anonymous"
+      src="https://esm.sh/jsr/@kuboon/otlp@0.1.6/exporter/browser/mod.js"
+    >
+    </script>
+  </head>
+  <body>
+    <h1>Test</h1>
+    <script type="module">
+      hoge();
+    </script>
+  </body>
+</html>

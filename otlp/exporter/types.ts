@@ -15,3 +15,9 @@ export const SpanKind = {
   PRODUCER: 4,
   CONSUMER: 5,
 } as const;
+
+export type IOtlpExporter = {
+  scope: { name: string; version: string };
+  serviceName: string;
+  fetch: (path: string, body: unknown) => Promise<Response>;
+};
