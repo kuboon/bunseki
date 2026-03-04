@@ -22,6 +22,7 @@ site.use(source_maps());
 site.add("exporter.browser.ts");
 site.add("exporter.server.ts");
 site.add("index.tsx");
+site.add("test.html");
 site.add("dashboard/:serviceName/index.tsx");
 site.add("dashboard/:serviceName/error/error.tsx");
 site.add("styles");

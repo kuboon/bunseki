@@ -15,7 +15,7 @@ export class OtlpExporter implements IOtlpExporter {
   readonly fetch: (path: string, body: unknown) => Promise<Response>;
   constructor(options: ExporterConfig) {
     this.serviceName = options.serviceName;
-    const endpoint = options.endpoint ?? "https://bunseki.kbn.one/otlp";
+    const endpoint = options.endpoint ?? "/otlp";
     const fetch_ = options.fetch ?? globalThis.fetch;
     this.fetch = (path: string, body: unknown) =>
       fetch_(endpoint + path, {

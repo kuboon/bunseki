@@ -1,6 +1,7 @@
 import { SpanKind } from "./types.ts";
 import { sendRedirectMetric } from "./core/metrics.ts";
 import { OtlpExporter as OtlpExporterBase, Span } from "./core/mod.ts";
+import { parseTraceparent } from "./utils.ts";
 
 type MiddlewareOpts = {
   postIf?: (res: Response) => boolean;
@@ -8,13 +9,9 @@ type MiddlewareOpts = {
 export class OtlpExporter extends OtlpExporterBase {
   onRequest(req: Request, route?: string): Span {
     const spanKind = SpanKind.SERVER;
-    const traceparent = req.headers.get("traceparent");
-    let [, traceId, parentSpanId, flags]: (string | undefined)[] =
-      traceparent?.split("-") || [];
-    if (flags !== "01") {
-      traceId = undefined;
-      parentSpanId = undefined;
-    }
+    const { traceId, parentSpanId } = parseTraceparent(
+      req.headers.get("traceparent"),
+    );
     const trace = this.newTrace({ traceId, spanKind });
     const span = trace.newSpan({
       name: ["HTTP", req.method, route].filter(Boolean).join(" "),

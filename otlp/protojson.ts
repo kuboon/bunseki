@@ -23,17 +23,29 @@ export type AttributeValue =
   | { doubleValue: number }
   | { boolValue: boolean }
   | { bytesValue: string }
-  | { arrayValue: { values: AttributeValue[] } };
+  | { arrayValue: { values: AttributeValue[] } }
+  | { kvlistValue: { values: Array<{ key: string; value: AttributeValue }> } }
+  | { nullValue: null };
 
 export type AttributePrimitive =
   | string
   | number
   | boolean
   | bigint
+  | null
   | Uint8Array
+  | AttributeObject
   | Array<AttributePrimitive>;
 
+export type AttributeObject = {
+  [key: string]: AttributePrimitive;
+};
+
 export function toAttributeValue(value: AttributePrimitive): AttributeValue {
+  if (value === null) {
+    return { nullValue: null };
+  }
+
   switch (typeof value) {
     case "string":
       return { stringValue: value };
@@ -54,9 +66,19 @@ export function toAttributeValue(value: AttributePrimitive): AttributeValue {
         return { bytesValue: bytesToBase64(value) };
       } else if (Array.isArray(value)) {
         return { arrayValue: { values: value.map(toAttributeValue) } };
-      } else {throw new Error(
+      } else if (Object.getPrototypeOf(value) === Object.prototype) {
+        return {
+          kvlistValue: {
+            values: Object.entries(value).map(([key, item]) =>
+              toKeyValue(key, item)
+            ),
+          },
+        };
+      } else {
+        throw new Error(
           "Unsupported attribute value type: " + typeof value,
-        );}
+        );
+      }
     default:
       throw new Error("Unsupported attribute value type: " + typeof value);
   }

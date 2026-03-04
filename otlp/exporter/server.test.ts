@@ -29,6 +29,18 @@ describe("onRequest", () => {
     const result = await span.postError(new Error("Test error"));
     if (!result.ok) throw result.error;
     expect(span.name).toBe("HTTP GET");
+    expect(await result.response.json()).toEqual({});
     // console.log(JSON.stringify(span.trace, null, 2));
+  });
+
+  it("keeps parent trace context even when unsampled", () => {
+    const req = new Request("http://localhost/test", {
+      method: "GET",
+      headers: {
+        traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00",
+      },
+    });
+    const span = exporter.onRequest(req);
+    expect(span.trace.traceId).toBe("4bf92f3577b34da6a3ce929d0e0e4736");
   });
 });

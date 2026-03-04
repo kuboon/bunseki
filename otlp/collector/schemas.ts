@@ -1,32 +1,80 @@
 import { scope, type } from "arktype";
 
+const UINT64_MAX = 18_446_744_073_709_551_615n;
+const INT64_MIN = -9_223_372_036_854_775_808n;
+const INT64_MAX = 9_223_372_036_854_775_807n;
+
+const UInt64String = type("string").pipe((value) => {
+  if (!/^(0|[1-9][0-9]*)$/.test(value)) {
+    throw new Error("Expected unsigned integer string");
+  }
+  if (BigInt(value) > UINT64_MAX) {
+    throw new Error("Value exceeds uint64 range");
+  }
+  return value;
+});
+
+const Int64String = type("string").pipe((value) => {
+  if (!/^-?(0|[1-9][0-9]*)$/.test(value)) {
+    throw new Error("Expected signed integer string");
+  }
+  const number = BigInt(value);
+  if (number < INT64_MIN || number > INT64_MAX) {
+    throw new Error("Value exceeds int64 range");
+  }
+  return value;
+});
+
+const TraceId = type("string").pipe((value) => {
+  if (!/^[0-9a-f]{32}$/i.test(value)) {
+    throw new Error("traceId must be 32 hex characters");
+  }
+  if (/^0+$/i.test(value)) {
+    throw new Error("traceId must not be all zeros");
+  }
+  return value;
+});
+
+const SpanId = type("string").pipe((value) => {
+  if (!/^[0-9a-f]{16}$/i.test(value)) {
+    throw new Error("spanId must be 16 hex characters");
+  }
+  if (/^0+$/i.test(value)) {
+    throw new Error("spanId must not be all zeros");
+  }
+  return value;
+});
+
 // OTLP/HTTP Validation Schemas
 
 // https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/common/v1/common.proto
-const AnyValueScope = scope({
+const OtlpScope = scope({
+  KeyValue: {
+    key: "string",
+    value: "AttributeValue",
+  },
   AttributeValue: {
     "stringValue?": "string",
     "intValue?": "string",
     "doubleValue?": "number",
     "boolValue?": "boolean",
     "bytesValue?": "string",
+    "nullValue?": "null | 'NULL_VALUE' | 0",
     "arrayValue?": {
       "values": "AttributeValue[]",
     },
+    "kvlistValue?": {
+      "values": "KeyValue[]",
+    },
   },
 });
-const AnyValue = AnyValueScope.export().AttributeValue;
+const { AttributeValue: AnyValue, KeyValue } = OtlpScope.export();
 export type AnyValueType = typeof AnyValue.infer;
-
-const KeyValue = type({
-  key: "string",
-  value: AnyValue,
-});
 
 // Span event
 const SpanEvent = type({
   name: "string",
-  timeUnixNano: "string",
+  timeUnixNano: UInt64String,
   "attributes?": KeyValue.array(),
   "droppedAttributesCount?": "number",
 });
@@ -34,8 +82,8 @@ export type SpanEventType = typeof SpanEvent.infer;
 
 // Span link
 const SpanLink = type({
-  traceId: "string",
-  spanId: "string",
+  traceId: TraceId,
+  spanId: SpanId,
   "traceState?": "string",
   "attributes?": KeyValue.array(),
   "droppedAttributesCount?": "number",
@@ -43,14 +91,14 @@ const SpanLink = type({
 
 // Span
 const SpanSchema = type({
-  traceId: "string",
-  spanId: "string",
+  traceId: TraceId,
+  spanId: SpanId,
   "traceState?": "string",
-  "parentSpanId?": "string",
+  "parentSpanId?": SpanId,
   name: "string",
   "kind?": "number",
-  startTimeUnixNano: "string",
-  endTimeUnixNano: "string",
+  startTimeUnixNano: UInt64String,
+  endTimeUnixNano: UInt64String,
   "attributes?": KeyValue.array(),
   "droppedAttributesCount?": "number",
   "events?": SpanEvent.array(),
@@ -100,10 +148,10 @@ export const tracesRequestSchema = type({
 // Number data point
 const NumberDataPoint = type({
   "attributes?": KeyValue.array(),
-  startTimeUnixNano: "string",
-  timeUnixNano: "string",
+  startTimeUnixNano: UInt64String,
+  timeUnixNano: UInt64String,
   "asDouble?": "number",
-  "asInt?": "string",
+  "asInt?": Int64String,
   "exemplars?": "unknown[]",
 });
 
@@ -159,16 +207,16 @@ export const metricsRequestSchema = type({
 
 // Log record
 const LogRecord = type({
-  timeUnixNano: "string",
-  "observedTimeUnixNano?": "string",
+  timeUnixNano: UInt64String,
+  "observedTimeUnixNano?": UInt64String,
   "severityNumber?": "number",
   "severityText?": "string",
   "body?": AnyValue,
   "attributes?": KeyValue.array(),
   "droppedAttributesCount?": "number",
   "flags?": "number",
-  "traceId?": "string",
-  "spanId?": "string",
+  "traceId?": TraceId,
+  "spanId?": SpanId,
 });
 
 // Log scope records

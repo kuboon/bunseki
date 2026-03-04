@@ -35,41 +35,44 @@ Deno.serve((req) => app.fetch(req));
 
 ### exporter/browser
 
-```ts
-import { OtlpExporter } from "jsr:@kuboon/otlp/exporter/browser.ts";
+```html
+<html>
+  <head>
+    <script>
+      const e = [], p = e.push.bind(e);
+      addEventListener("error", p, true);
+      addEventListener("unhandledrejection", p);
+      addEventListener("DOMContentLoaded", () => {
+        removeEventListener("error", p, true);
+        removeEventListener("unhandledrejection", p);
+        for (const err of e) dispatchEvent(err);
+      });
+    </script>
+    <script
+      type="module"
+      crossorigin="anonymous"
+      src="https://esm.sh/jsr/@kuboon/otlp/exporter/browser"
+    >
+    </script>
+  </head>
+  <body>
+    <script type="module">
+      const apiRes = await fetch("/api/do_something", {
+        method: "POST",
+        headers: {
+          traceparent: span.traceparent,
+        },
+      });
 
-const otlp = new OtlpExporter({
-  serviceName: "your-app",
-  endpoint: "https://your-collector.example.com",
-});
-
-const span = await otlp.onPageLoad();
-
-globalThis.addEventListener("error", (ev) => {
-  if (ev.error instanceof Error) {
-    await span.postError(ev.error);
-  }
-});
-
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    await span.post();
-  }
-});
-
-const apiRes = await fetch("/api/do_something", {
-  method: "POST",
-  headers: {
-    traceparent: span.traceparent,
-  },
-});
-
-// or use span.fetch
-// - adds traceparent header
-// - capture fetch error and report
-const apiRes = await span.fetch("/api/do_something", {
-  method: "POST",
-});
+      // or use span.fetch
+      // - adds traceparent header
+      // - capture fetch error and report
+      const apiRes = await span.fetch("/api/do_something", {
+        method: "POST",
+      });
+    </script>
+  </body>
+</html>
 ```
 
 ### exporter/server

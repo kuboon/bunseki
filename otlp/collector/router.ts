@@ -11,9 +11,9 @@ import { sValidator } from "@hono/standard-validator";
 // Helper to extract service name from resource attributes
 function getServiceName(
   attributes: Array<{ key: string; value: { stringValue?: string } }>,
-): string | null {
+): string {
   const attr = attributes.find((a) => a.key === "service.name");
-  return attr?.value?.stringValue || null;
+  return attr?.value?.stringValue || "unknown_service";
 }
 
 /**
@@ -36,7 +36,6 @@ export function createCollectorRouter(storage: OtlpStorage) {
             const serviceName = getServiceName(
               resourceSpan.resource?.attributes || [],
             );
-            if (!serviceName) continue;
 
             for (const scopeSpan of resourceSpan.scopeSpans) {
               for (const span of scopeSpan.spans) {
@@ -50,13 +49,10 @@ export function createCollectorRouter(storage: OtlpStorage) {
               }
             }
           }
-          return c.json({
-            success: true,
-            message: "Traces received",
-          });
+          return c.json({});
         } catch (error) {
           console.error("Error processing traces:", error);
-          return c.json({ error: "Failed to process traces" }, 400);
+          return c.json({ error: "Failed to process traces" }, 500);
         }
       },
     )
@@ -73,7 +69,6 @@ export function createCollectorRouter(storage: OtlpStorage) {
             const serviceName = getServiceName(
               resourceMetric.resource?.attributes || [],
             );
-            if (!serviceName) continue;
 
             for (const scopeMetric of resourceMetric.scopeMetrics) {
               for (const metric of scopeMetric.metrics) {
@@ -113,13 +108,10 @@ export function createCollectorRouter(storage: OtlpStorage) {
             }
           }
 
-          return c.json({
-            success: true,
-            message: "Metrics received",
-          });
+          return c.json({});
         } catch (error) {
           console.error("Error processing metrics:", error);
-          return c.json({ error: "Failed to process metrics" }, 400);
+          return c.json({ error: "Failed to process metrics" }, 500);
         }
       },
     )
@@ -131,16 +123,35 @@ export function createCollectorRouter(storage: OtlpStorage) {
         try {
           const body = c.req.valid("json");
 
-          // TODO: Process and store log data
-          console.log(`Received ${body.resourceLogs.length} resource logs`);
+          for (const resourceLog of body.resourceLogs) {
+            const serviceName = getServiceName(
+              resourceLog.resource?.attributes || [],
+            );
 
-          return c.json({
-            success: true,
-            message: "Logs received",
-          });
+            for (const scopeLog of resourceLog.scopeLogs) {
+              for (const logRecord of scopeLog.logRecords) {
+                console.log(JSON.stringify({
+                  type: "otlp.log",
+                  serviceName,
+                  scopeName: scopeLog.scope?.name,
+                  scopeVersion: scopeLog.scope?.version,
+                  timeUnixNano: logRecord.timeUnixNano,
+                  observedTimeUnixNano: logRecord.observedTimeUnixNano,
+                  severityNumber: logRecord.severityNumber,
+                  severityText: logRecord.severityText,
+                  body: logRecord.body,
+                  attributes: logRecord.attributes || [],
+                  traceId: logRecord.traceId,
+                  spanId: logRecord.spanId,
+                }));
+              }
+            }
+          }
+
+          return c.json({});
         } catch (error) {
           console.error("Error processing logs:", error);
-          return c.json({ error: "Failed to process logs" }, 400);
+          return c.json({ error: "Failed to process logs" }, 500);
         }
       },
     );

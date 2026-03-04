@@ -2,26 +2,30 @@
 <html>
   <head>
     <script>
-      const e = [], p = (err) => e.push(err);
+      const e = [], p = e.push.bind(e);
       addEventListener("error", p, true);
       addEventListener("unhandledrejection", p);
-      addEventListener("DOMContentLoaded", () => {
+      window.getStartupErrors = () => {
         removeEventListener("error", p, true);
         removeEventListener("unhandledrejection", p);
-        for (const err of e) dispatchEvent(err);
-      });
+        return e;
+      };
     </script>
-    <script
-      type="module"
-      crossorigin="anonymous"
-      src="https://esm.sh/jsr/@kuboon/otlp@0.1.6/exporter/browser/mod.js"
-    >
+    <script type="module">
+      import { span } from "/exporter.browser.js";
+      await Promise.all(window.getStartupErrors().map(e => {
+        span.recordException(e instanceof PromiseRejectionEvent ? e.reason : e);
+      }));
+      span.
     </script>
   </head>
   <body>
     <h1>Test</h1>
     <script type="module">
       hoge();
+      await new Promise((_, reject) =>
+        reject(new Error("Promise error"))
+      );
     </script>
   </body>
 </html>
